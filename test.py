@@ -10,7 +10,7 @@ from datetime import datetime
 datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 csv_format = "data_%s.csv"
-exe = "/Users/sl/Downloads/chromedriver"
+exe = "/home/szaday2/opt/chromedriver"
 url = "https://finance.yahoo.com/quote/{0}/news?p={0}"
 tickers = ['FB','MSFT','AAPL','NVDA','AMD','XLNX','QCOM','MU']
 ## tickers = ["INTC"]
@@ -22,7 +22,9 @@ def is_advertisement(li) -> bool:
 
 def req_with_scrolling(url, max_scroll):
     ##### Web scrapper for infinite scrolling page #####
-    driver = webdriver.Chrome(service=service)
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    driver = webdriver.Chrome(service=service, options=options)
     driver.get(url)
     sleep_time = 1
     time.sleep(sleep_time)  # Allow 2 seconds for the web page to open
