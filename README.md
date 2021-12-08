@@ -1,3 +1,3 @@
 Dec 6 - Sophie's task: rewrite the cpu part so that the "headers" are pulled and analyzed, not the entire article.
 Dec 7 - Sophie's task: grab and compile the news and prices for the past months. Write the CPU listener to collect data every hr, starting from Dec 8.
-Dec 8 - run and test the CPU listener, pushed to remote server, and update the data in git Data Branch from 9am to 5pm EST (8am to 4pm CT). The price is updated every 15 mins, the news is updated every hr. 
+Dec 8 - run and test the CPU listener, pushed to remote server, and updated the data in git Data Branch from 9am to 5pm EST (8am to 4pm CT). The price is updated every 15 mins, the news is updated every hr. 
