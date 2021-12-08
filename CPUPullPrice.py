@@ -1,3 +1,6 @@
+## this file is the same as test2.py in data folder. 
+## the code runs on a remote server to pull price.
+
 from bs4 import BeautifulSoup as BS
 
 import requests

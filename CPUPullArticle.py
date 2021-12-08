@@ -1,3 +1,6 @@
+## this file is the same as test.py in data folder. 
+## the code runs on a remote server to pull article.
+
 from bs4 import BeautifulSoup as BS
 
 from selenium import webdriver
