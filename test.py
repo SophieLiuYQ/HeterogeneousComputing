@@ -10,7 +10,7 @@ from datetime import datetime
 datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 csv_format = "data_%s.csv"
-exe = "/Downloads"
+exe = "/home/szaday2/opt/chromedriver"
 url = "https://finance.yahoo.com/quote/{0}/news?p={0}"
 tickers = ['FB','MSFT','AAPL','NVDA','AMD','XLNX','QCOM','MU']
 ## tickers = ["INTC"]
