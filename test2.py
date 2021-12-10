@@ -21,7 +21,7 @@ def req_ticker(ticker):
     lis = soup.find_all('fin-streamer', {"data-field": "regularMarketPrice", "data-symbol": ticker})
     return [ li.getText() for li in lis ]
 
-now = datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')
+now = datetime.now().strftime('%m/%d/%y %H:%M') # %Y-%m-%d %I:%M:%S %p')
 
 for ticker in tickers:
     csv = csv_format % ticker
