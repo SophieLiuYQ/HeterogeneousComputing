@@ -10,7 +10,7 @@ from datetime import datetime
 datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 csv_format = "data_%s.csv"
-exe = "/home/szaday2/opt/chromedriver"
+exe = "/Downloads"
 url = "https://finance.yahoo.com/quote/{0}/news?p={0}"
 tickers = ['FB','MSFT','AAPL','NVDA','AMD','XLNX','QCOM','MU']
 ## tickers = ["INTC"]
@@ -51,7 +51,7 @@ def req_ticker(ticker, max_scroll=sys.maxsize):
     h3s = sum([li.find_all("h3") for li in lis if not is_advertisement(li)], [])
     return [h3.getText() for h3 in h3s]
 
-now = datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')
+now = datetime.now().strftime('%m/%d/%y %H:%M')
 
 
 for ticker in tickers:
