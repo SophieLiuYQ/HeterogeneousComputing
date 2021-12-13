@@ -27,19 +27,23 @@ from matplotlib import pyplot as plt
 from matplotlib import dates as plt_dates
 import re
 import csv
+from dateutil.parser import parse
 
 ########### Global Variables and Configurations ###########
 # Global Constants
 
 ## THIS WAS ORIGINALLY 19 STOCK TICKERS
-STOCK_TAGS = ['FB',
-              'MSFT',
-              'AAPL',
-              'NVDA',
-              'AMD',
-              'XLNX',
-              'QCOM',
-              'MU']
+# STOCK_TAGS = ['FB',
+#               'MSFT',
+#               'AAPL',
+#               'NVDA',
+#               'AMD',
+#               'XLNX',
+#               'QCOM',
+#               'MU']
+
+STOCK_TAGS = ['MSFT',
+              'NVDA']
 
 ARTICLES_PER_STOCK = 10
 SUCCESS_THREASHOLD = 5
@@ -606,37 +610,6 @@ data from the stock price data file and loads it up so that new prices can be ad
 '''
 
 
-def load_past_stock_prices():
-    global total_up
-    global total_down
-
-    logging.info('Loading past stock prices')
-    print('Loading stock prices')
-
-    for ticker in STOCK_TAGS:
-        try:
-            file = open("./past_data/{}.csv".format(ticker), 'r')
-        except IOError as error:
-            logging.warning('- Could not load stock prices for {}, Error: '.format(stock) + str(error))
-
-        # skip the first line as it is the header
-        file.readline()
-
-        # create stock_prices dic for current stock
-        stock_prices[ticker] = {}
-
-        for line in file:
-            data = line.strip().split(",")
-            open_price = round(float(data[1]), 5)
-            close_price = round(float(data[4]), 5)
-            stock_prices[ticker][data[0]] = (open_price, close_price)
-
-            if open_price > close_price:
-                total_down += 1
-            else:
-                total_up += 1
-        file.close()
-
 
 
 
@@ -648,36 +621,36 @@ for this and open and close prices are all thats kept.
 '''
 
 
-def update_today_stock_prices():
-
-    today = datetime.datetime.now()
-    today_str = str(today.year) + '-' + str(today.month) + '-' + str(today.day)
-
-    logging.info('Pulling stock prices for: ' + today_str)
-    print('Pulling stock prices')
-
-    # For each stock, get todays value
-    for ticker in STOCK_TAGS:
-
-        logging.debug('Pulling price data for: ' + ticker)
-        file = open("./past_data/{}.csv".format(ticker), 'a')
-
-        # If the stock is not in the stock prices, add it
-        # if ticker not in stock_prices:
-        #     stock_price[tickers] = {}
-
-        # Get stock's open and close for today
-        open_p, high_p, low_p, close_p, adj_price, volume = get_stock_data_for_today(ticker)
-        csv_write = csv.writer(out,dialect='excel')
-        csv_write.writerow([today_str, open_p, high_p, low_p, close_p, adj_price, volume])
-        # logging.debug('Price for: ' + tickers + ' is open: ' + str(open_p) + ', close: ' + str(close_p))
-        file.close()
-
-
-def get_stock_data_for_today(ticker):
-    # Make the request to google finance for the ticker and get its raw html
-    # should return all the values needed for the ticker for current day
-    pass
+# def update_today_stock_prices():
+#
+#     today = datetime.datetime.now()
+#     today_str = str(today.year) + '-' + str(today.month) + '-' + str(today.day)
+#
+#     logging.info('Pulling stock prices for: ' + today_str)
+#     print('Pulling stock prices')
+#
+#     # For each stock, get todays value
+#     for ticker in STOCK_TAGS:
+#
+#         logging.debug('Pulling price data for: ' + ticker)
+#         file = open("./past_data/{}.csv".format(ticker), 'a')
+#
+#         # If the stock is not in the stock prices, add it
+#         # if ticker not in stock_prices:
+#         #     stock_price[tickers] = {}
+#
+#         # Get stock's open and close for today
+#         open_p, high_p, low_p, close_p, adj_price, volume = get_stock_data_for_today(ticker)
+#         csv_write = csv.writer(out,dialect='excel')
+#         csv_write.writerow([today_str, open_p, high_p, low_p, close_p, adj_price, volume])
+#         # logging.debug('Price for: ' + tickers + ' is open: ' + str(open_p) + ', close: ' + str(close_p))
+#         file.close()
+#
+#
+# def get_stock_data_for_today(ticker):
+#     # Make the request to google finance for the ticker and get its raw html
+#     # should return all the values needed for the ticker for current day
+#     pass
 
 
 
@@ -822,7 +795,7 @@ calls the update_word function which either adds or updates the word in the weig
 '''
 
 
-def update_all_word_weights(option, day):
+def update_all_word_weights(option, day, time_num):
     '''
     | |
     |_|
@@ -834,7 +807,7 @@ def update_all_word_weights(option, day):
 
     '''
 
-    logging.info('Updating word weights for: ' + day + ' with option: ' + option)
+    logging.info('Updating word weights for: ' + day + ' {}:{}'.format(time_num*2+8, time_num*2+10) + ' with option: ' + option)
     print('Updating word weights')
 
     # If the weighting arrays are empty, create them
@@ -863,10 +836,10 @@ def update_all_word_weights(option, day):
         cpu = 0
 
         # For each stock, iterate through the articles
-        for articles in stock_data[ticker]:
+        for article in stock_data[ticker]:
 
             # Get the text (ignore link)
-            text = articles[1]
+            text = article
 
             # Get an array of words with two or more characters for the text
             words_in_text = re.compile('[A-Za-z][A-Za-z][A-Za-z]+').findall(text)
@@ -875,7 +848,7 @@ def update_all_word_weights(option, day):
 
             # Update each word
             for each_word in words_in_text:
-                update_word(ticker, option, each_word, day)
+                update_word(ticker, option, each_word, day, time_num)
 
             end = time.time()
             cpu += end - start
@@ -905,15 +878,13 @@ their weights or adds them to the list.
 '''
 
 
-def update_word(ticker, option, word_upper, day):
+def update_word(ticker, option, word_upper, day, time_num):
     global total_words_up
     global total_words_down
 
     # Make the word lowercase and get the length of the word
     word = word_upper.lower()
-    len_word = len(word)
-    if len_word > 16:
-        len_word = 16
+    word_len = len(word) if len(word) < 16 else 16
 
     # Find the letter index for the words array
     index = ord(word[:1]) - 97
@@ -931,11 +902,10 @@ def update_word(ticker, option, word_upper, day):
 
         # Get the current word data to be compared
         test_data = struct.unpack_from('16s f i i', letter_words, ii * 28)
-        temp_word = test_data[0].decode('utf_8')
+        temp_word = test_data[0].decode('utf_8').split('\0', 1)[0]
 
         # Check if the word is the same
-        word_len = len(word) if len(word) < 16 else 16
-        if temp_word[:len(temp_word.split('\0', 1)[0])] == word[:word_len]:
+        if len(temp_word) == word_len and temp_word == word[:word_len]:
 
             # If it is the same, mark it as found and update its values
             # weight = (weight * value + increase)/(value + increase)
@@ -948,7 +918,7 @@ def update_word(ticker, option, word_upper, day):
                 logging.error('-- Could not find stock price data for ' + ticker + ' on ' + day)
                 return
 
-            change = stock_prices[ticker][day][1] - stock_prices[ticker][day][0]
+            change = stock_prices[ticker][day][time_num][1] - stock_prices[ticker][day][time_num][0]
 
             # Option 1: 1 for up, 0 for down, average the ups and downs for weights
             # weight = num_up / total
@@ -958,7 +928,7 @@ def update_word(ticker, option, word_upper, day):
                 if change > 0:
                     weight = test_data[1]
                     extra1 = test_data[2] + 1
-                    extra2 = test_data[3] + 1
+                    extra2 = test_data[3] + 3
 
                 else:
                     weight = test_data[1]
@@ -990,13 +960,13 @@ def update_word(ticker, option, word_upper, day):
     if not found:
         # Get whether the stock went up or down
         # weight is automatically 1 or 0 for the first one
-        change = stock_prices[ticker][day][1] - stock_prices[ticker][day][0]
+        change = stock_prices[ticker][day][time_num][1] - stock_prices[ticker][day][time_num][0]
 
         if option == 'opt1':
             if change > 0:
                 weight = 0
                 extra1 = 1
-                extra2 = 1
+                extra2 = 3
             else:
                 weight = 0
                 extra1 = 1
@@ -2196,39 +2166,12 @@ Display help and exit
 
 def print_help():
     logging.debug('Displaying help and exiting')
-
-    print('To predict stock price based on articles for the current day, use (must have already pulled articles): ')
-    print('\t ./stock_market_prediction.py -p\n')
     print(
-        'To predict stock price based on articles for the current day with a specific weighting option, use (must have already pulled articles): ')
-    print('\t ./stock_market_prediction.py -p -o option\n')
-    print('To predict stock price based on articles for a specific day, use (must have already pulled articles): ')
-    print('\t ./stock_market_prediction.py -p -d mm-d-yyyy\n')
+        'To update word weights for articles and prices for the day specified, use (must have already pulled weights and prices):')
+    print('\t ./stock_market_prediction.py -d mm-dd-yyyy\n')
     print(
-        'To predict stock price based on articles for a specific day with a specific weighting option, use (must have already pulled articles): ')
-    print('\t ./stock_market_prediction.py -p -d mm-d-yyyy -o option\n')
-    print('To pull articles for the current day, use (currently no support for pulling articles for previous days):')
-    print('\t ./stock_market_prediction.py -a\n')
-    print('To pull stock prices for the current day, use (currently no support for pulling prices for previous days):')
-    print('\t ./stock_market_prediction.py -s\n')
-    print(
-        'To update word weights for articles and prices from the current day, use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -u\n')
-    print(
-        'To update word weights for articles and prices from the current day with a specific weighting option, use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -u -o option\n')
-    print(
-        'To update word weights for articles and prices from a specifc day, use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -u -d mm-d-yyyy\n')
-    print(
-        'To update word weights for articles and prices from a specifc day with a specific weighting option, use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -u -d mm-d-yyyy -o option\n')
-    print(
-        'To update word weights for articles and prices from a date range, use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -u -b mm-d-yyyy -e mm-d-yyyy\n')
-    print(
-        'To update word weights for articles and prices from a date range with a specific weighting option, use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -u -b mm-d-yyyy -e mm-d-yyyy -o option\n')
+        'To update word weights for articles and prices for the day specified and time specified(0:8-10,1:10-12,2:12-14,3:14-16), use (must have already pulled weights and prices):')
+    print('\t ./stock_market_prediction.py -d mm-dd-yyyy -t time_num\n')
 
     print(
         '\nCurrently available weighting options are opt1 and opt2. opt1 uses average with 1 for a word seen with up and 0 with a word seen with down.\n opt2 uses a Naive Bayes classifier.\n')
@@ -2251,11 +2194,11 @@ def verify_date(date):
         test_date = datetime.date(int(date_parts[2]), int(date_parts[0]), int(date_parts[1]))
     except:
         return False
-
+    # print("test_date is {}".format(test_date))
     if test_date > today:
         return False
 
-    return True
+    return test_date
 
 
 '''
@@ -2396,6 +2339,90 @@ def determine_accuracy():
     plt.savefig('prediction_accuracy.png')
 
 
+def load_articles(day, time_num):
+    # directory is './data/data_{}'
+    for ticker in STOCK_TAGS:
+        # start = time.time()
+
+        # Try to open the file for that stock from the given directory
+        logging.debug('Starting to load articles for: ' + ticker)
+        try:
+            file = open('./data/data_{}.csv'.format(ticker), 'r')
+        except IOError as error:
+            logging.warning('Could not load articles for: ' + ticker + ', Error: ' + str(error))
+            continue
+
+        # skip the first line as it is the header
+        file.readline()
+        # Prepare variables to save the article data
+        stock_data[ticker] = []
+        need_time = (time_num*2 + 8, time_num*2 + 10)
+        for line in file:
+            data = line.strip().rsplit(",", 1)
+            # data[0] is the news header and data[1] is the datetime
+            date_time = data[1]
+            date = str(parse(date_time.split()[0])).split()[0]
+            # print(date)
+            localtime = date_time.split()[1]
+            hour = int(localtime.split(":")[0])
+            # print(hour)
+            if date == day:
+                if time_num != 3:
+                    if hour >= need_time[0] and hour < need_time[1]:
+                        stock_data[ticker].append(data[0])
+                else:
+                    # if we load articles for 14-16,we actually load all the aricles after 14 pm
+                    # , because the data is used for tomorrow morning
+                    if hour >= need_time[0]:
+                        stock_data[ticker].append(data[0])
+        # print(current_article)
+        print(stock_data[ticker])
+        # if len(stock_data[ticker]) < SUCCESS_THREASHOLD:
+        #     logging.error('Could not load the threshold (' + str(
+        #         SUCCESS_THREASHOLD) + ') number of articles. Either not saved or another error occured.')
+        #     return False
+    print(stock_data)
+    return True
+
+
+def load_stock_prices():
+    for ticker in STOCK_TAGS:
+        try:
+            file = open("./data/price_{}.csv".format(ticker), 'r')
+        except IOError as error:
+            logging.warning('- Could not load stock prices for {}, Error: '.format(ticker) + str(error))
+
+        # skip the first line as it is the header
+        file.readline()
+
+        # create stock_prices dic for current stock
+        stock_prices[ticker] = {}
+        cur_day = ""
+        price_prev = 0
+        for line in file:
+            data = line.strip().split(",")
+            # get price and datetime
+            price = round(float(data[0]), 2)
+            date_time = data[1]
+            # reformat time
+            date = str(parse(date_time.split()[0])).split()[0]
+            localtime = date_time.split()[1]
+            if date != cur_day:
+                if price_prev != 0:
+                    stock_prices[ticker][cur_day][3].append(price_prev)
+                cur_day = date
+                cur_hour = 8
+                stock_prices[ticker][date] = {}
+                stock_prices[ticker][date][0] = [price]
+            hour = int(localtime.split(":")[0])
+            if hour != cur_hour and hour != (cur_hour+1):
+                stock_prices[ticker][date][(cur_hour-8)//2].append(price)
+                cur_hour = hour
+                stock_prices[ticker][date][(cur_hour-8)//2] = [price]
+            price_prev = price
+        print(stock_prices)
+        file.close()
+
 '''
 Main Execution
 - Part 1: Parsing Inputs and Pulling, Storing, and Loading Articles
@@ -2408,13 +2435,14 @@ def main():
     start_day = ''
     end_day = ''
     weight_opt = 'opt1'
+    time_num = -1
 
     today = datetime.date.today()
     today_str = str(today.month) + '-' + str(today.day) + '-' + str(today.year)
 
     # First get any command line arguments to edit actions
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hpsauzvd:b:e:o:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hpsauzvd:t:o:')
     except getopt.GetoptError:
         print_help()
     for opt, arg in opts:
@@ -2437,11 +2465,8 @@ def main():
         elif opt == '-d':
             specified_day = arg
         # Command line argument for specifying the Beginning of a date range (only for update)
-        elif opt == '-b':
-            start_day = arg
-        # Command line argument for specifying the End of a date range (only for update)
-        elif opt == '-e':
-            end_day = arg
+        elif opt == '-t':
+            time_num = int(arg)
         # Command for specifying which weighting system to use
         elif opt == '-o':
             if arg == 'opt1' or arg == 'opt2':
@@ -2511,7 +2536,7 @@ def main():
         logging.info('Pulling articles for: ' + today_str)
 
         # Call the proper functions
-        pull_recent_articles()
+        # pull_recent_articles()
 
         logging.info('Pulling articles complete')
 
@@ -2521,13 +2546,12 @@ def main():
         logging.info('Pulling stock prices for: ' + today_str)
 
         # Call the proper functions
-        update_today_stock_prices()
+        # update_today_stock_prices()
 
         logging.info('Pulling stock prices complete')
 
     # Update word weights
     elif execution_type == 3:
-
         # Load non-day specific values
         logging.info('Loading non-day specific data before updating word weights')
 
@@ -2537,169 +2561,37 @@ def main():
         # First check to see if a day is specified, if it is, set it to the day
         # - If not, use the current day as the specified day
         if not verify_date(specified_day):
-            specified_day = today_str
+            print("the input day is incorrect")
+            sys.exit(-1)
 
-        # If there is no start day specified, then it is assumed that the user wants
-        # - a specified day or the current day. This is added to the days array.
-        if not verify_date(start_day):
-            days.append(specified_day)
-
-        # If there is a start day specified, then the it checks to see if there is an end day. If not,
-        # - it sets the current day to the end date. The difference between the start data and the and date
-        # - is calculated and the dates inbetween are added to the days array.
-        else:
-            date_parts1 = start_day.split('-')
-            date1 = datetime.date(int(date_parts1[2]), int(date_parts1[0]), int(date_parts1[1]))
-            date2 = datetime.date.today()
-            if verify_date(end_day):
-                date_parts2 = end_day.split('-')
-                date2 = datetime.date(int(date_parts2[2]), int(date_parts2[0]), int(date_parts2[1]))
-
-            delta = date2 - date1
-            for each_day in range(0, delta.days + 1):
-                temp_day = date1 + datetime.timedelta(days=each_day)
-                days.append(str(temp_day.month) + '-' + str(temp_day.day) + '-' + str(temp_day.year))
-
-        load_past_stock_prices()
-
+        day = str(parse(specified_day)).split()[0]
+        days.append(day)
+        load_stock_prices()
         # Run everything on the CPU
         load_all_word_weights(weight_opt)
         for each in days:
-
-            logging.info('Updating word weights for: ' + each)
-
-            # Call the proper functions
-            if load_articles(each):
-                update_all_word_weights(weight_opt, each)
-            stock_data.clear()  # To prepare for the next set of articles
-
-        if GPU:
-            # Clear and run everything on the GPU
-            del words_by_letter[:]
-            del num_words_by_letter[:]
-
-            load_all_word_weights(weight_opt)
-
-            # Run everything on the GPU
-            for each in days:
-
-                logging.info('Updating word weights with the gpu for: ' + each)
+            if time_num != -1:
+                logging.info('Updating word weights for: ' + each + ' and time span is {}-{}'.format(time_num*2+8, time_num*2+10))
 
                 # Call the proper functions
-                if load_articles(each):
-                    update_all_word_weights_gpu(weight_opt, each)
+                if load_articles(each, time_num):
+                    update_all_word_weights(weight_opt, each, time_num)
                 stock_data.clear()  # To prepare for the next set of articles
+            else:
+                for tn in range(4):
+                    logging.info('Updating word weights for: ' + each + ' and time span is {}-{}'.format(tn*2+8, tn*2+10))
+
+                    # Call the proper functions
+                    if load_articles(each, tn):
+                        update_all_word_weights(weight_opt, each, tn)
+                    stock_data.clear()  # To prepare for the next set of articles
+
 
         # Save data
         logging.info('Saving word weights')
         save_all_word_weights(weight_opt)
 
         logging.info('Updating word weights complete')
-
-    # Determine speedup from GPU and comparison between GPU and CPU outputs
-    if GPU:
-        print('')
-        if len(analysis_outputs_gpu) != len(analysis_outputs_cpu):
-            print('Mismatch in number of analysis outputs between GPU and CPU.')
-        elif len(analysis_outputs_gpu) > 0:
-            sum_percentage = 0
-            for ii in range(0, len(analysis_outputs_cpu)):
-
-                if (analysis_outputs_cpu[ii] + analysis_outputs_gpu[ii]) != 0:
-                    percentage = 2 * abs(analysis_outputs_cpu[ii] - analysis_outputs_gpu[ii]) / (
-                                analysis_outputs_cpu[ii] + analysis_outputs_gpu[ii])
-
-                    sum_percentage += percentage
-
-            print('Analysis Avg Percent Difference: ' + str(sum_percentage * 100 / len(analysis_outputs_cpu)) + ' %')
-
-        if len(prediction_outputs_gpu) != len(prediction_outputs_cpu):
-            print('Mismatch in number of prediction outputs between GPU and CPU.')
-
-        elif len(prediction_outputs_gpu) > 0:
-            sum_percentage = 0
-            for ii in range(0, len(prediction_outputs_cpu)):
-
-                if (prediction_outputs_cpu[ii] + prediction_outputs_gpu[ii]) != 0:
-                    percentage = 2 * abs(prediction_outputs_cpu[ii] - prediction_outputs_gpu[ii]) / (
-                                prediction_outputs_cpu[ii] + prediction_outputs_gpu[ii])
-
-                    sum_percentage += percentage
-
-            print(
-                'Prediction Avg Percent Difference: ' + str(sum_percentage * 100 / len(prediction_outputs_cpu)) + ' %')
-
-        if len(update_outputs_gpu) != len(update_outputs_cpu):
-            print('Mismatch in number of update outputs between GPU and CPU.')
-
-        elif len(update_outputs_gpu) > 0:
-            sum_percentage = 0
-            for ii in range(0, len(update_outputs_cpu)):
-
-                if (update_outputs_cpu[ii] + update_outputs_gpu[ii]) != 0:
-                    percentage = 2 * abs(update_outputs_cpu[ii] - update_outputs_gpu[ii]) / (
-                                update_outputs_cpu[ii] + update_outputs_gpu[ii])
-
-                    sum_percentage += percentage
-            print('Update Avg Percent Difference: ' + str(sum_percentage * 100 / len(update_outputs_cpu)) + ' %')
-
-        print('')
-        if len(analysis_cpu_kernel_time) != 0 and len(analysis_cpu_function_time) != 0 and len(
-                analysis_gpu_kernel_time) != 0 and len(analysis_gpu_function_time) != 0:
-            sum_cpu_function = 0
-            sum_cpu_kernel = 0
-            for times in analysis_cpu_function_time:
-                sum_cpu_function += times
-            for times in analysis_cpu_kernel_time:
-                sum_cpu_kernel += times
-
-            sum_gpu_function = 0
-            sum_gpu_kernel = 0
-            for times in analysis_gpu_function_time:
-                sum_gpu_function += times
-            for times in analysis_gpu_kernel_time:
-                sum_gpu_kernel += times
-
-            print('Analysis Speedup: Kernel = ' + str(sum_cpu_kernel / sum_gpu_kernel) + ', Function = ' + str(
-                sum_cpu_function / sum_gpu_function))
-
-        if len(predict_cpu_kernel_time) != 0 and len(predict_cpu_function_time) != 0 and len(
-                predict_gpu_kernel_time) != 0 and len(predict_gpu_function_time) != 0:
-            sum_cpu_function = 0
-            sum_cpu_kernel = 0
-            for times in predict_cpu_function_time:
-                sum_cpu_function += times
-            for times in predict_cpu_kernel_time:
-                sum_cpu_kernel += times
-
-            sum_gpu_function = 0
-            sum_gpu_kernel = 0
-            for times in predict_gpu_function_time:
-                sum_gpu_function += times
-            for times in predict_gpu_kernel_time:
-                sum_gpu_kernel += times
-
-            print('Prediction Speedup: Kernel = ' + str(sum_cpu_kernel / sum_gpu_kernel) + ', Function = ' + str(
-                sum_cpu_function / sum_gpu_function))
-
-        if len(update_cpu_kernel_time) != 0 and len(update_cpu_function_time) != 0 and len(
-                update_gpu_kernel_time) != 0 and len(update_gpu_function_time) != 0:
-            sum_cpu_function = 0
-            sum_cpu_kernel = 0
-            for times in update_cpu_function_time:
-                sum_cpu_function += times
-            for times in update_cpu_kernel_time:
-                sum_cpu_kernel += times
-
-            sum_gpu_function = 0
-            sum_gpu_kernel = 0
-            for times in update_gpu_function_time:
-                sum_gpu_function += times
-            for times in update_gpu_kernel_time:
-                sum_gpu_kernel += times
-
-            print('Update Speedup: Kernel = ' + str(sum_cpu_kernel / sum_gpu_kernel) + ', Function = ' + str(
-                sum_cpu_function / sum_gpu_function))
 
     print('')
     print('Done')

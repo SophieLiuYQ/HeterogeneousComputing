@@ -6,4 +6,8 @@ Dec 10 - Sophie's task: look into the algorithm and try to run with our data.
 
 
 Dec  8~9 - Xiao's task: search statistic prediction algorithm; reduce the algorithm to three; modify load_stock_price according to the csv data format.
-Dec 10 - Xiao's task: modify the way to load&update word weights according to our project. Using hourly stock price to run kernel.
+Dec 10 - Xiao's task: modify (use_for_test.py) the way to load word weights according to our project.
+Dec 13 - Xiao's task: modify (use_for_test.py) load_stock_price and load_article according to the file format.
+         divide the trading hours into 0: 8-10; 1: 10-12; 2: 12-14; 3: 14-16
+         (actually for time > 14, I classify it as type 3, as it is used for predicting tomorrow 8-10)
+         There is something inconsistent here, need to fix!!!
