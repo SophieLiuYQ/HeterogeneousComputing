@@ -16,7 +16,7 @@ from dateutil.parser import parse
 import logging
 
 
-def load_articles(day, time_num):
+def load_articles(day, time_num, STOCK_TAGS):
     # directory is './data/data_{}'
     for ticker in STOCK_TAGS:
         # start = time.time()
