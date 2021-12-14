@@ -32,7 +32,6 @@ from dateutil.parser import parse
 ########### Global Variables and Configurations ###########
 # Global Constants
 
-## THIS WAS ORIGINALLY 19 STOCK TICKERS
 # STOCK_TAGS = ['FB',
 #               'MSFT',
 #               'AAPL',
@@ -42,8 +41,9 @@ from dateutil.parser import parse
 #               'QCOM',
 #               'MU']
 
-STOCK_TAGS = ['MSFT',
-              'NVDA']
+from load_articles import load_articles
+from load_stock_prices import load_stock_prices
+from verify_date import verify_date
 
 ARTICLES_PER_STOCK = 10
 SUCCESS_THREASHOLD = 5
@@ -127,471 +127,6 @@ if GPU:
     ctx = cl.Context(devs)
     queue = cl.CommandQueue(ctx)
 
-analysis_kernel = """
-
-__kernel void analyze_weights_1(__global int* words_by_letter, __global int* num_words_by_letter, volatile __global float* out_stats, int max_words_per_letter) {
-
-    // Get the word for the current work-item to focus on
-
-    unsigned int word_id = get_global_id(0);
-    unsigned int letter_id = get_global_id(1);
-
-    // Prepare the indices for the reduction
-
-    unsigned int work_item_id = get_local_id(0);
-    unsigned int work_group_x = get_group_id(0);
-    unsigned int work_group_y = get_group_id(1);
-    unsigned int group_size = get_local_size(0);
-
-    // Create local arrays to store the data in
-    // The value 512 must be equal to the group size. This is the only value in the kernel
-        // - that must be updated when the group size is changed.
-
-    volatile __local float local_out[6 * 512];
-
-    // Get the weight and frequency for the current thread
-
-    float weight = 0;   
-    int frequency = 0;
-    if (word_id < num_words_by_letter[letter_id]) {
-        frequency = words_by_letter[letter_id * max_words_per_letter * 7 + word_id * 7 + 5];
-        weight = (float)words_by_letter[letter_id * max_words_per_letter * 7 + word_id * 7 + 6] / frequency;
-    }
-
-    // Each thread loads initial data into its own space in local memory
-
-    local_out[group_size * 0 + work_item_id] =  weight;
-    local_out[group_size * 1 + work_item_id] =  frequency * weight;
-    local_out[group_size * 2 + work_item_id] =  weight;
-    local_out[group_size * 3 + work_item_id] =  (word_id < num_words_by_letter[letter_id]) ? weight : 1;
-    local_out[group_size * 4 + work_item_id] =  (word_id < num_words_by_letter[letter_id]) ? 1 : 0;
-    local_out[group_size * 5 + work_item_id] =  frequency;
-
-
-    // Preform reduction
-
-    for (unsigned int stride = 1; stride < group_size; stride *= 2) {
-
-        barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE);
-
-        if ( work_item_id % stride == 0 && work_item_id < group_size / 2) {
-
-            local_out[group_size * 0 + work_item_id * 2] +=  local_out[group_size * 0 + work_item_id * 2 + stride];
-            local_out[group_size * 1 + work_item_id * 2] +=  local_out[group_size * 1 + work_item_id * 2 + stride];
-            local_out[group_size * 2 + work_item_id * 2] =   local_out[group_size * 2 + work_item_id * 2 + stride] > local_out[group_size * 2 + work_item_id * 2] ? local_out[group_size * 2 + work_item_id * 2 + stride] : local_out[group_size * 2 + work_item_id * 2];
-            local_out[group_size * 3 + work_item_id * 2] =   local_out[group_size * 3 + work_item_id * 2 + stride] < local_out[group_size * 3 + work_item_id * 2] ? local_out[group_size * 3 + work_item_id * 2 + stride] : local_out[group_size * 3 + work_item_id * 2];
-            local_out[group_size * 4 + work_item_id * 2] +=  local_out[group_size * 4 + work_item_id * 2 + stride];
-            local_out[group_size * 5 + work_item_id * 2] +=  local_out[group_size * 5 + work_item_id * 2 + stride];
-        }
-    }
-
-    // Synchronize work items again to ensure all are done reduction before writeback
-
-    barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE);
-
-    // Writeback to output
-
-    if (work_item_id < 6) {
-        out_stats[ (work_group_y * 5 + work_group_x) * 6 + work_item_id] = local_out[group_size * work_item_id];
-    }
-}
-
-__kernel void analyze_weights_2(__global int* words_by_letter, __global int* num_words_by_letter, volatile __global float* out_stats, int max_words_per_letter, float average, float weighted_average) {
-
-    // Get the word for the current work-item to focus on
-
-    unsigned int word_id = get_global_id(0);
-    unsigned int letter_id = get_global_id(1);
-
-    // Prepare the indices for the reduction
-
-    unsigned int work_item_id = get_local_id(0);
-    unsigned int work_group_x = get_group_id(0);
-    unsigned int work_group_y = get_group_id(1);
-    unsigned int group_size = get_local_size(0);
-
-    // Create local arrays to store the data in
-    // The value 512 must be equal to the group size. This is the only value in the kernel
-    // - that must be updated when the group size is changed.
-
-    volatile __local float local_out[2 * 512];
-
-    // Get the weight and frequency for the current thread
-
-    float weight = 0;   
-    int frequency = 0;
-    if (word_id < num_words_by_letter[letter_id]) {
-        frequency = words_by_letter[letter_id * max_words_per_letter * 7 + word_id * 7 + 5];
-        weight = (float)words_by_letter[letter_id * max_words_per_letter * 7 + word_id * 7 + 6] / frequency;
-    }
-
-    // Each thread loads initial data into its own space in local memory - initialize the normal average to zero first to avoid incorrect initialization for out of bounds values
-
-    local_out[group_size * 0 + work_item_id] = 0;
-
-    if (word_id < num_words_by_letter[letter_id])
-        local_out[group_size * 0 + work_item_id] =  (weight - average) * (weight - average);
-
-    local_out[group_size * 1 + work_item_id] =  (weight - weighted_average) * (weight - weighted_average) * frequency;
-
-    // Preform reduction
-
-    for (unsigned int stride = 1; stride < group_size; stride *= 2) {
-
-        barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE);
-
-        if ( work_item_id % stride == 0 && work_item_id < group_size / 2) {
-
-            local_out[group_size * 0 + work_item_id * 2] +=  local_out[group_size * 0 + work_item_id * 2 + stride];
-            local_out[group_size * 1 + work_item_id * 2] +=  local_out[group_size * 1 + work_item_id * 2 + stride];
-        }
-    }
-
-    // Synchronize work items again to ensure all are done reduction before writeback
-
-    barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE);
-
-    // Writeback to output
-
-    if (work_item_id < 2) {
-        out_stats[ (work_group_y * 5 + work_group_x) * 2 + work_item_id] = local_out[group_size * work_item_id];
-    }
-}
-
-"""
-
-predict_kernel = """
-
-__kernel void predict(__global char* words, __global int* weights, __global char* weights_char, __global int* num_weights_letter, volatile __global float* out_weights, int max_words_per_letter, int word_max) {
-
-    // Get the word for the current work-item to focus on
-
-    unsigned int word_id = get_global_id(0);
-
-    unsigned int word_index = word_id * 16;
-
-    // Get the weight forthe current work item to focus on
-
-    unsigned int weight_id = get_global_id(1);
-
-    if ( word_id < word_max ) 
-    {
-        unsigned int letter_index;
-        if (words[word_index] > 96) 
-            letter_index = words[word_index] - 'a';
-        else
-            letter_index = words[word_index] - 'A';
-
-        unsigned int weight_index = letter_index * max_words_per_letter * 28 + weight_id * 28;
-        unsigned int weight_index_int = letter_index * max_words_per_letter * 7 + weight_id * 7;
-        unsigned int weight_max = letter_index * max_words_per_letter * 28 + num_weights_letter[letter_index] * 28;
-
-        // Get the inputs and outputs to be compared
-
-        char word_0 = words[word_index + 0];
-        char word_1 = words[word_index + 1];
-        char word_2 = words[word_index + 2];
-        char word_3 = words[word_index + 3];
-        char word_4 = words[word_index + 4];
-        char word_5 = words[word_index + 5];
-        char word_6 = words[word_index + 6];
-        char word_7 = words[word_index + 7];
-        char word_8 = words[word_index + 8];
-        char word_9 = words[word_index + 9];
-        char word_10 = words[word_index + 10];
-        char word_11 = words[word_index + 11];
-        char word_12 = words[word_index + 12];
-        char word_13 = words[word_index + 13];
-        char word_14 = words[word_index + 14];
-        char word_15 = words[word_index + 15];
-
-        if ( weight_index < weight_max ) 
-        {
-            char word_w_0 = weights_char[weight_index + 0];
-            char word_w_1 = weights_char[weight_index + 1];
-            char word_w_2 = weights_char[weight_index + 2];
-            char word_w_3 = weights_char[weight_index + 3];
-            char word_w_4 = weights_char[weight_index + 4];
-            char word_w_5 = weights_char[weight_index + 5];
-            char word_w_6 = weights_char[weight_index + 6];
-            char word_w_7 = weights_char[weight_index + 7];
-            char word_w_8 = weights_char[weight_index + 8];
-            char word_w_9 = weights_char[weight_index + 9];
-            char word_w_10 = weights_char[weight_index + 10];
-            char word_w_11 = weights_char[weight_index + 11];
-            char word_w_12 = weights_char[weight_index + 12];
-            char word_w_13 = weights_char[weight_index + 13];
-            char word_w_14 = weights_char[weight_index + 14];
-            char word_w_15 = weights_char[weight_index + 15];
-
-            // Compare them and update the output if necessary
-
-            if ( word_0 == word_w_0 && word_1 == word_w_1 && word_2 == word_w_2 && word_3 == word_w_3 &&
-                 word_4 == word_w_4 && word_5 == word_w_5 && word_6 == word_w_6 && word_7 == word_w_7 &&
-                 word_8 == word_w_8 && word_9 == word_w_9 && word_10 == word_w_10 && word_11 == word_w_11 &&
-                 word_12 == word_w_12 && word_13 == word_w_13 && word_14 == word_w_14 && word_15 == word_w_15)
-            {
-                int frequency = weights[weight_index_int + 5];
-                float weight = (float)weights[weight_index_int + 6] / frequency;
-
-                out_weights[word_id] = weight;
-            }
-        }
-    }
-}
-
-__kernel void predict_bayes(__global char* words, __global int* weights, __global char* weights_char, __global int* num_weights_letter, volatile __global float* out_probabilities_up, volatile __global float* out_probabilities_down, int total_weights_up, int total_weights_down, int total_weights, float c, int max_words_per_letter, int word_max) {
-
-    // Get the word for the current work-item to focus on
-
-    unsigned int word_id = get_global_id(0);
-
-    unsigned int word_index = word_id * 16;
-
-    // Get the weight forthe current work item to focus on
-
-    unsigned int weight_id = get_global_id(1);
-
-    if ( word_id < word_max ) 
-    {
-        unsigned int letter_index;
-        if (words[word_index] > 96) 
-            letter_index = words[word_index] - 'a';
-        else
-            letter_index = words[word_index] - 'A';
-
-        unsigned int weight_index = letter_index * max_words_per_letter * 28 + weight_id * 28;
-        unsigned int weight_index_int = letter_index * max_words_per_letter * 7 + weight_id * 7;
-        unsigned int weight_max = letter_index * max_words_per_letter * 28 + num_weights_letter[letter_index] * 28;
-
-        // Get the inputs and outputs to be compared
-
-        char word_0 = words[word_index + 0];
-        char word_1 = words[word_index + 1];
-        char word_2 = words[word_index + 2];
-        char word_3 = words[word_index + 3];
-        char word_4 = words[word_index + 4];
-        char word_5 = words[word_index + 5];
-        char word_6 = words[word_index + 6];
-        char word_7 = words[word_index + 7];
-        char word_8 = words[word_index + 8];
-        char word_9 = words[word_index + 9];
-        char word_10 = words[word_index + 10];
-        char word_11 = words[word_index + 11];
-        char word_12 = words[word_index + 12];
-        char word_13 = words[word_index + 13];
-        char word_14 = words[word_index + 14];
-        char word_15 = words[word_index + 15];
-
-        if ( weight_index < weight_max ) 
-        {
-            char word_w_0 = weights_char[weight_index + 0];
-            char word_w_1 = weights_char[weight_index + 1];
-            char word_w_2 = weights_char[weight_index + 2];
-            char word_w_3 = weights_char[weight_index + 3];
-            char word_w_4 = weights_char[weight_index + 4];
-            char word_w_5 = weights_char[weight_index + 5];
-            char word_w_6 = weights_char[weight_index + 6];
-            char word_w_7 = weights_char[weight_index + 7];
-            char word_w_8 = weights_char[weight_index + 8];
-            char word_w_9 = weights_char[weight_index + 9];
-            char word_w_10 = weights_char[weight_index + 10];
-            char word_w_11 = weights_char[weight_index + 11];
-            char word_w_12 = weights_char[weight_index + 12];
-            char word_w_13 = weights_char[weight_index + 13];
-            char word_w_14 = weights_char[weight_index + 14];
-            char word_w_15 = weights_char[weight_index + 15];
-
-            // Compare them and update the output if necessary
-
-            if ( word_0 == word_w_0 && word_1 == word_w_1 && word_2 == word_w_2 && word_3 == word_w_3 &&
-                 word_4 == word_w_4 && word_5 == word_w_5 && word_6 == word_w_6 && word_7 == word_w_7 &&
-                 word_8 == word_w_8 && word_9 == word_w_9 && word_10 == word_w_10 && word_11 == word_w_11 &&
-                 word_12 == word_w_12 && word_13 == word_w_13 && word_14 == word_w_14 && word_15 == word_w_15)
-            {
-                float up = ((float)weights[weight_index_int + 5] + c) / (total_weights_up + c * total_weights);
-                float down = ((float)weights[weight_index_int + 6] + c) / (total_weights_down + c * total_weights);
-
-                out_probabilities_up[word_id] = up;
-                out_probabilities_down[word_id] = down;
-            }
-        }
-    }
-}
-"""
-
-update_kernel = """
-
-__kernel void update(__global char* words, volatile __global int* word_bitmap, volatile __global int* weights, __global char* weights_char, __global int* num_weights_letter, int max_words_per_letter, int word_max, int direction) {
-
-    // Get the word for the current work-item to focus on
-
-    unsigned int word_id = get_global_id(0);
-
-    unsigned int word_index = word_id * 16;
-
-    // Get the weight for the current work item to focus on
-
-    unsigned int weight_id = get_global_id(1);
-
-    if ( word_id < word_max ) 
-    {
-        unsigned int letter_index;
-        if (words[word_index] > 96) 
-            letter_index = words[word_index] - 'a';
-        else
-            letter_index = words[word_index] - 'A';
-
-        unsigned int weight_index = letter_index * max_words_per_letter * 28 + weight_id * 28;
-        unsigned int weight_index_int = letter_index * max_words_per_letter * 7 + weight_id * 7;
-        unsigned int weight_max = letter_index * max_words_per_letter * 28 + num_weights_letter[letter_index] * 28;
-
-        // Get the inputs and outputs to be compared
-
-        char word_0 = words[word_index + 0];
-        char word_1 = words[word_index + 1];
-        char word_2 = words[word_index + 2];
-        char word_3 = words[word_index + 3];
-        char word_4 = words[word_index + 4];
-        char word_5 = words[word_index + 5];
-        char word_6 = words[word_index + 6];
-        char word_7 = words[word_index + 7];
-        char word_8 = words[word_index + 8];
-        char word_9 = words[word_index + 9];
-        char word_10 = words[word_index + 10];
-        char word_11 = words[word_index + 11];
-        char word_12 = words[word_index + 12];
-        char word_13 = words[word_index + 13];
-        char word_14 = words[word_index + 14];
-        char word_15 = words[word_index + 15];
-
-        if ( weight_index < weight_max ) 
-        {
-            char word_w_0 = weights_char[weight_index + 0];
-            char word_w_1 = weights_char[weight_index + 1];
-            char word_w_2 = weights_char[weight_index + 2];
-            char word_w_3 = weights_char[weight_index + 3];
-            char word_w_4 = weights_char[weight_index + 4];
-            char word_w_5 = weights_char[weight_index + 5];
-            char word_w_6 = weights_char[weight_index + 6];
-            char word_w_7 = weights_char[weight_index + 7];
-            char word_w_8 = weights_char[weight_index + 8];
-            char word_w_9 = weights_char[weight_index + 9];
-            char word_w_10 = weights_char[weight_index + 10];
-            char word_w_11 = weights_char[weight_index + 11];
-            char word_w_12 = weights_char[weight_index + 12];
-            char word_w_13 = weights_char[weight_index + 13];
-            char word_w_14 = weights_char[weight_index + 14];
-            char word_w_15 = weights_char[weight_index + 15];
-
-            // Compare them and update the output if necessary
-
-            if ( word_0 == word_w_0 && word_1 == word_w_1 && word_2 == word_w_2 && word_3 == word_w_3 &&
-                 word_4 == word_w_4 && word_5 == word_w_5 && word_6 == word_w_6 && word_7 == word_w_7 &&
-                 word_8 == word_w_8 && word_9 == word_w_9 && word_10 == word_w_10 && word_11 == word_w_11 &&
-                 word_12 == word_w_12 && word_13 == word_w_13 && word_14 == word_w_14 && word_15 == word_w_15)
-            {
-                if (direction == 1)
-                {
-                    atomic_inc(weights + weight_index_int + 5);
-                    atomic_inc(weights + weight_index_int + 6);
-                }
-                else
-                {
-                    atomic_inc(weights + weight_index_int + 5);
-                }
-
-                word_bitmap[word_id] = 1;
-            }
-        }
-    }
-}
-
-__kernel void update_bayes(__global char* words, volatile __global int* word_bitmap, volatile __global int* weights, __global char* weights_char, __global int* num_weights_letter, int max_words_per_letter, int word_max, int direction) {
-
-    // Get the word for the current work-item to focus on
-
-    unsigned int word_id = get_global_id(0);
-
-    unsigned int word_index = word_id * 16;
-
-    // Get the weight for the current work item to focus on
-
-    unsigned int weight_id = get_global_id(1);
-
-    if ( word_id < word_max ) 
-    {
-        unsigned int letter_index;
-        if (words[word_index] > 96) 
-            letter_index = words[word_index] - 'a';
-        else
-            letter_index = words[word_index] - 'A';
-
-        unsigned int weight_index = letter_index * max_words_per_letter * 28 + weight_id * 28;
-        unsigned int weight_index_int = letter_index * max_words_per_letter * 7 + weight_id * 7;
-        unsigned int weight_max = letter_index * max_words_per_letter * 28 + num_weights_letter[letter_index] * 28;
-
-        // Get the inputs and outputs to be compared
-
-        char word_0 = words[word_index + 0];
-        char word_1 = words[word_index + 1];
-        char word_2 = words[word_index + 2];
-        char word_3 = words[word_index + 3];
-        char word_4 = words[word_index + 4];
-        char word_5 = words[word_index + 5];
-        char word_6 = words[word_index + 6];
-        char word_7 = words[word_index + 7];
-        char word_8 = words[word_index + 8];
-        char word_9 = words[word_index + 9];
-        char word_10 = words[word_index + 10];
-        char word_11 = words[word_index + 11];
-        char word_12 = words[word_index + 12];
-        char word_13 = words[word_index + 13];
-        char word_14 = words[word_index + 14];
-        char word_15 = words[word_index + 15];
-
-        if ( weight_index < weight_max ) 
-        {
-            char word_w_0 = weights_char[weight_index + 0];
-            char word_w_1 = weights_char[weight_index + 1];
-            char word_w_2 = weights_char[weight_index + 2];
-            char word_w_3 = weights_char[weight_index + 3];
-            char word_w_4 = weights_char[weight_index + 4];
-            char word_w_5 = weights_char[weight_index + 5];
-            char word_w_6 = weights_char[weight_index + 6];
-            char word_w_7 = weights_char[weight_index + 7];
-            char word_w_8 = weights_char[weight_index + 8];
-            char word_w_9 = weights_char[weight_index + 9];
-            char word_w_10 = weights_char[weight_index + 10];
-            char word_w_11 = weights_char[weight_index + 11];
-            char word_w_12 = weights_char[weight_index + 12];
-            char word_w_13 = weights_char[weight_index + 13];
-            char word_w_14 = weights_char[weight_index + 14];
-            char word_w_15 = weights_char[weight_index + 15];
-
-            // Compare them and update the output if necessary
-
-            if ( word_0 == word_w_0 && word_1 == word_w_1 && word_2 == word_w_2 && word_3 == word_w_3 &&
-                 word_4 == word_w_4 && word_5 == word_w_5 && word_6 == word_w_6 && word_7 == word_w_7 &&
-                 word_8 == word_w_8 && word_9 == word_w_9 && word_10 == word_w_10 && word_11 == word_w_11 &&
-                 word_12 == word_w_12 && word_13 == word_w_13 && word_14 == word_w_14 && word_15 == word_w_15)
-            {
-                if (direction == 1)
-                {
-                    atomic_inc(weights + weight_index_int + 5);
-                }
-                else
-                {
-                    atomic_inc(weights + weight_index_int + 6);
-                }
-
-                word_bitmap[word_id] = 1;
-            }
-        }
-    }
-}
-"""
-
 # Build the kernel
 if GPU:
     analysis_prg = cl.Program(ctx, analysis_kernel).build()
@@ -602,125 +137,6 @@ if GPU:
 ############# the following code, pull article and load article, is updated with function PullArticle
 #############--------------------------- Dec 6 -----------------------------#########################
 ###################### the replacement part is from line 623 to line 811 ############################
-
-'''
-Evening Update Step
-Step 6 is to load past stock data into the data structure. This will be used before pulling the data after the first run. This pulls
-data from the stock price data file and loads it up so that new prices can be added to it.
-'''
-
-
-
-
-
-
-'''
-Evening Update Step
-Step 8 is to pull all stock data for the current day and add it to the stock prices data structure. The yahoo finance api is used
-for this and open and close prices are all thats kept.
-'''
-
-
-# def update_today_stock_prices():
-#
-#     today = datetime.datetime.now()
-#     today_str = str(today.year) + '-' + str(today.month) + '-' + str(today.day)
-#
-#     logging.info('Pulling stock prices for: ' + today_str)
-#     print('Pulling stock prices')
-#
-#     # For each stock, get todays value
-#     for ticker in STOCK_TAGS:
-#
-#         logging.debug('Pulling price data for: ' + ticker)
-#         file = open("./past_data/{}.csv".format(ticker), 'a')
-#
-#         # If the stock is not in the stock prices, add it
-#         # if ticker not in stock_prices:
-#         #     stock_price[tickers] = {}
-#
-#         # Get stock's open and close for today
-#         open_p, high_p, low_p, close_p, adj_price, volume = get_stock_data_for_today(ticker)
-#         csv_write = csv.writer(out,dialect='excel')
-#         csv_write.writerow([today_str, open_p, high_p, low_p, close_p, adj_price, volume])
-#         # logging.debug('Price for: ' + tickers + ' is open: ' + str(open_p) + ', close: ' + str(close_p))
-#         file.close()
-#
-#
-# def get_stock_data_for_today(ticker):
-#     # Make the request to google finance for the ticker and get its raw html
-#     # should return all the values needed for the ticker for current day
-#     pass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-Morning Prediction Step & Evening Update Step
-Step 2 & 7 is to load all the word weights into the right data structures so it can be used in analyzing the new data. The strange array structure 
-is to enable implementation in pyCUDA in the near future. Otherwise, a hash function would have ben used for constant time access. The words are
-stored by letter which will hopefully make it more efficient.
-'''
 
 
 def load_all_word_weights(option):
@@ -2178,35 +1594,12 @@ def print_help():
     sys.exit(2)
 
 
-'''
-Verifies that a date is valid and in the right format
-'''
-
-
-def verify_date(date):
-    today = datetime.date.today()
-    date_parts = date.split('-')
-
-    if len(date_parts) < 3:
-        return False
-
-    try:
-        test_date = datetime.date(int(date_parts[2]), int(date_parts[0]), int(date_parts[1]))
-    except:
-        return False
-    # print("test_date is {}".format(test_date))
-    if test_date > today:
-        return False
-
-    return test_date
 
 
 '''
 Simply prints the analysis of the weights (does not analyze them, just prints)
 - Only for weighting option opt1
 '''
-
-
 def print_weight_analysis():
     print('')
     print('Weight Stats (Based on number of words):')
@@ -2338,98 +1731,13 @@ def determine_accuracy():
     plt.ylabel('Accuracy')
     plt.savefig('prediction_accuracy.png')
 
-
-def load_articles(day, time_num):
-    # directory is './data/data_{}'
-    for ticker in STOCK_TAGS:
-        # start = time.time()
-
-        # Try to open the file for that stock from the given directory
-        logging.debug('Starting to load articles for: ' + ticker)
-        try:
-            file = open('./data/data_{}.csv'.format(ticker), 'r')
-        except IOError as error:
-            logging.warning('Could not load articles for: ' + ticker + ', Error: ' + str(error))
-            continue
-
-        # skip the first line as it is the header
-        file.readline()
-        # Prepare variables to save the article data
-        stock_data[ticker] = []
-        need_time = (time_num*2 + 8, time_num*2 + 10)
-        for line in file:
-            data = line.strip().rsplit(",", 1)
-            # data[0] is the news header and data[1] is the datetime
-            date_time = data[1]
-            date = str(parse(date_time.split()[0])).split()[0]
-            # print(date)
-            localtime = date_time.split()[1]
-            hour = int(localtime.split(":")[0])
-            # print(hour)
-            if date == day:
-                if time_num != 3:
-                    if hour >= need_time[0] and hour < need_time[1]:
-                        stock_data[ticker].append(data[0])
-                else:
-                    # if we load articles for 14-16,we actually load all the aricles after 14 pm
-                    # , because the data is used for tomorrow morning
-                    if hour >= need_time[0]:
-                        stock_data[ticker].append(data[0])
-        # print(current_article)
-        print(stock_data[ticker])
-        # if len(stock_data[ticker]) < SUCCESS_THREASHOLD:
-        #     logging.error('Could not load the threshold (' + str(
-        #         SUCCESS_THREASHOLD) + ') number of articles. Either not saved or another error occured.')
-        #     return False
-    print(stock_data)
-    return True
-
-
-def load_stock_prices():
-    for ticker in STOCK_TAGS:
-        try:
-            file = open("./data/price_{}.csv".format(ticker), 'r')
-        except IOError as error:
-            logging.warning('- Could not load stock prices for {}, Error: '.format(ticker) + str(error))
-
-        # skip the first line as it is the header
-        file.readline()
-
-        # create stock_prices dic for current stock
-        stock_prices[ticker] = {}
-        cur_day = ""
-        price_prev = 0
-        for line in file:
-            data = line.strip().split(",")
-            # get price and datetime
-            price = round(float(data[0]), 2)
-            date_time = data[1]
-            # reformat time
-            date = str(parse(date_time.split()[0])).split()[0]
-            localtime = date_time.split()[1]
-            if date != cur_day:
-                if price_prev != 0:
-                    stock_prices[ticker][cur_day][3].append(price_prev)
-                cur_day = date
-                cur_hour = 8
-                stock_prices[ticker][date] = {}
-                stock_prices[ticker][date][0] = [price]
-            hour = int(localtime.split(":")[0])
-            if hour != cur_hour and hour != (cur_hour+1):
-                stock_prices[ticker][date][(cur_hour-8)//2].append(price)
-                cur_hour = hour
-                stock_prices[ticker][date][(cur_hour-8)//2] = [price]
-            price_prev = price
-        print(stock_prices)
-        file.close()
-
 '''
 Main Execution
 - Part 1: Parsing Inputs and Pulling, Storing, and Loading Articles
 '''
 
-
 def main():
+    STOCK_TAGS = ['MSFT','NVDA']
     execution_type = -1
     specified_day = ''
     start_day = ''
@@ -2438,7 +1746,6 @@ def main():
     time_num = -1
 
     today = datetime.date.today()
-    today_str = str(today.month) + '-' + str(today.day) + '-' + str(today.year)
 
     # First get any command line arguments to edit actions
     try:
@@ -2452,57 +1759,20 @@ def main():
         # Command line argument for Predict
         elif opt == '-p':
             execution_type = 0
-        # Command line argument for pull new Articles
-        elif opt == '-a':
-            execution_type = 1
-        # Command line argument for pull new Stock prices
-        elif opt == '-s':
-            execution_type = 2
-        # Command line argument for Update word weights
-        elif opt == '-u':
-            execution_type = 3
-        # Command line argument for adding a specfic Day (will only matter for predict and update)
-        elif opt == '-d':
-            specified_day = arg
-        # Command line argument for specifying the Beginning of a date range (only for update)
-        elif opt == '-t':
-            time_num = int(arg)
         # Command for specifying which weighting system to use
         elif opt == '-o':
             if arg == 'opt1' or arg == 'opt2':
                 weight_opt = arg
-        # Command line argument for printing current weight stats
-        elif opt == '-z':
-            load_all_word_weights('opt1')
-            if GPU:
-                if not analyze_weights() or not analyze_weights_gpu():
-                    print('Error: Unable to analyze weights')
-                    sys.exit(-1)
-            else:
-                if not analyze_weights():
-                    print('Error: Unable to analyze weights')
-                    sys.exit(-1)
-
-            print_weight_analysis()
-            sys.exit(0)
-        elif opt == '-v':
-            load_stock_prices()
-            determine_accuracy()
-            sys.exit(0)
 
     # Depending on the input type, preform the proper action
     # Predict
     if execution_type == 0:
 
-        # First prepare the day to predict on
-        if not verify_date(specified_day):
-            specified_day = today_str
-
-        logging.info('Predicting price movement for: ' + specified_day)
 
         # Call the proper functions
         load_all_word_weights(weight_opt)
-        if not load_articles(specified_day):
+        stock_data = load_articles(specified_day, time_num, STOCK_TAGS)
+        if stock_data is None:
             print('Error: Could not load articles for: ', specified_day)
             sys.exit(-1)
 
@@ -2529,26 +1799,6 @@ def main():
                 predict_movement7(specified_day)
 
         logging.info('Predicting complete')
-
-    # Pull new articles
-    elif execution_type == 1:
-
-        logging.info('Pulling articles for: ' + today_str)
-
-        # Call the proper functions
-        # pull_recent_articles()
-
-        logging.info('Pulling articles complete')
-
-    # Pull new stock prices
-    elif execution_type == 2:
-
-        logging.info('Pulling stock prices for: ' + today_str)
-
-        # Call the proper functions
-        # update_today_stock_prices()
-
-        logging.info('Pulling stock prices complete')
 
     # Update word weights
     elif execution_type == 3:
