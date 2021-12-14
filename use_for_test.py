@@ -2206,13 +2206,13 @@ def print_help():
         'We split trading hours into 0-> 8:30~10:00, 1-> 10:00~12:00, 2-> 12:00~14:00, 3-> 14:00~15:30')
     print(
         'To predict stock price based on articles for the day and time_span specified, time_num should be choose from 0~3:')
-    print('\t ./stock_market_prediction.py -p -d mm-dd-yyyy -t time_num\n')
+    print('\t ./use_for_test.py -p -d mm-dd-yyyy -t time_num\n')
     print(
         'To update word weights for articles and prices for the day specified, use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -u -d mm-dd-yyyy\n')
+    print('\t ./use_for_test.py -u -d mm-dd-yyyy\n')
     print(
         'To update word weights for articles and prices for the day specified and time specified(0:8-10,1:10-12,2:12-14,3:14-16), use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -u -d mm-dd-yyyy -t time_num\n')
+    print('\t ./use_for_test.py -u -d mm-dd-yyyy -t time_num\n')
 
     print(
         '\nCurrently available weighting options are opt1 and opt2. opt1 uses average with 1 for a word seen with up and 0 with a word seen with down.\n opt2 uses a Naive Bayes classifier.\n')
