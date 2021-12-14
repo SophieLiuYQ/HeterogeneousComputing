@@ -3,7 +3,7 @@ Dec 7 - Sophie's task: grab and compile the news and prices for the past months.
 Dec 8 - Sophie's task: run and test the CPU listener, pushed to remote server, and updated the data in git Data Branch from 9am to 5pm EST (8am to 4pm CT). The price is updated every 15 mins, the news is updated every hr. 
 Dec 9 - Sophie's task: no task scheduled for the day. Doing other HWs.
 Dec 10 - Sophie's task: look into the algorithm and try to run with our data. 
-
+Dec 13 - Sophie's tasks: check load_stock_price and load_article and see whether can run it
 
 Dec  8~9 - Xiao's task: search statistic prediction algorithm; reduce the algorithm to three; modify load_stock_price according to the csv data format.
 Dec 10 - Xiao's task: modify (use_for_test.py) the way to load word weights according to our project.
