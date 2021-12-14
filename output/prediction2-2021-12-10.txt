@@ -1,0 +1,248 @@
+Prediction for time span 8:30 ~ 10:00 
+Prediction Method 2: 
+Not Using weights within 0.5 standard deviation of the mean in prediciton.
+Buy if above mean, sell if below mean. 
+Weighting stats based on each occurence of each words. 
+
+Predictions Based On Weighting Stats: 
+- Avg: 1.0714791224345364
+- Std: 0.7615262191045635
+- Sum: 1514.0
+- Cnt: 1413
+- Max: 2.0
+- Min: 0.0
+
+Prediction for: FB 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: MSFT 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: AAPL 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: NVDA 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: AMD 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: XLNX 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: QCOM 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: MU 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for time span 10:00 ~ 12:00 
+Prediction Method 2: 
+Not Using weights within 0.5 standard deviation of the mean in prediciton.
+Buy if above mean, sell if below mean. 
+Weighting stats based on each occurence of each words. 
+
+Predictions Based On Weighting Stats: 
+- Avg: 1.0714791224345364
+- Std: 0.7615262191045635
+- Sum: 1514.0
+- Cnt: 1413
+- Max: 2.0
+- Min: 0.0
+
+Prediction for: FB 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: MSFT 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: AAPL 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: NVDA 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: AMD 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: XLNX 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: QCOM 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: MU 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for time span 12:00 ~ 14:00 
+Prediction Method 2: 
+Not Using weights within 0.5 standard deviation of the mean in prediciton.
+Buy if above mean, sell if below mean. 
+Weighting stats based on each occurence of each words. 
+
+Predictions Based On Weighting Stats: 
+- Avg: 1.0714791224345364
+- Std: 0.7615262191045635
+- Sum: 1514.0
+- Cnt: 1413
+- Max: 2.0
+- Min: 0.0
+
+Prediction for: FB 
+- Std above mean: 0.730336839477328
+- Raw val rating: 1.6276497744744824
+- Buy prob is: 0.7674078424182349
+- Corresponds to: buy
+
+Prediction for: MSFT 
+- Std above mean: 0.08901635016453133
+- Raw val rating: 1.1392674070138198
+- Buy prob is: 0.5354655419242874
+- Corresponds to: buy
+
+Prediction for: AAPL 
+- Std above mean: 0.4799739621850059
+- Raw val rating: 1.4369918791259206
+- Buy prob is: 0.684377046135727
+- Corresponds to: buy
+
+Prediction for: NVDA 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: AMD 
+- Std above mean: -0.07766742824868064
+- Raw val rating: 1.0123333394527436
+- Buy prob is: 0.46904630215308146
+- Corresponds to: sell
+
+Prediction for: XLNX 
+- Std above mean: -0.25866708260592114
+- Raw val rating: 0.8744973570108414
+- Buy prob is: 0.397946059807776
+- Corresponds to: sell
+
+Prediction for: QCOM 
+- Std above mean: 0.39036197715587545
+- Raw val rating: 1.3687500029802322
+- Buy prob is: 0.6518655500623741
+- Corresponds to: buy
+
+Prediction for: MU 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for time span 14:00 ~ 15:30 
+Prediction Method 2: 
+Not Using weights within 0.5 standard deviation of the mean in prediciton.
+Buy if above mean, sell if below mean. 
+Weighting stats based on each occurence of each words. 
+
+Predictions Based On Weighting Stats: 
+- Avg: 1.0714791224345364
+- Std: 0.7615262191045635
+- Sum: 1514.0
+- Cnt: 1413
+- Max: 2.0
+- Min: 0.0
+
+Prediction for: FB 
+- Std above mean: -0.09386298283804949
+- Raw val rating: 1.0
+- Buy prob is: 0.4626089996942649
+- Corresponds to: sell
+
+Prediction for: MSFT 
+- Std above mean: 0.3024928002167496
+- Raw val rating: 1.3018353208899498
+- Buy prob is: 0.618861789427901
+- Corresponds to: buy
+
+Prediction for: AAPL 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: NVDA 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: AMD 
+- Std above mean: 0.6356661498969218
+- Raw val rating: 1.555555562178294
+- Buy prob is: 0.7375029780630777
+- Corresponds to: buy
+
+Prediction for: XLNX 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: QCOM 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+
+Prediction for: MU 
+- Std above mean: None
+- Raw val rating: None
+- Buy prob is: None
+- Corresponds to: undecided
+

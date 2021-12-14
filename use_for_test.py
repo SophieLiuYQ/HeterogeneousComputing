@@ -32,18 +32,18 @@ from dateutil.parser import parse
 ########### Global Variables and Configurations ###########
 # Global Constants
 
-## THIS WAS ORIGINALLY 19 STOCK TICKERS
-# STOCK_TAGS = ['FB',
-#               'MSFT',
-#               'AAPL',
-#               'NVDA',
-#               'AMD',
-#               'XLNX',
-#               'QCOM',
-#               'MU']
+## THIS WAS ORIGINALLY 8 STOCK TICKERS
+STOCK_TAGS = ['FB',
+              'MSFT',
+              'AAPL',
+              'NVDA',
+              'AMD',
+              'XLNX',
+              'QCOM',
+              'MU']
 
-STOCK_TAGS = ['MSFT',
-              'NVDA']
+# STOCK_TAGS = ['MSFT',
+#               'NVDA']
 
 ARTICLES_PER_STOCK = 10
 SUCCESS_THREASHOLD = 5
@@ -107,9 +107,9 @@ update_outputs_cpu = []
 # Global Configurations
 if not os.path.exists('./data/'):
     os.makedirs('./data/')
-    os.makedirs('./data/articles/')
-elif not os.path.exists('./data/articles/'):
-    os.makedirs('./data/articles/')
+#     os.makedirs('./data/articles/')
+# elif not os.path.exists('./data/articles/'):
+#     os.makedirs('./data/articles/')
 
 if not os.path.exists('./output/'):
     os.makedirs('./output/')
@@ -774,6 +774,7 @@ def load_all_word_weights(option):
         else:
             # Get the data
             data = lines.split()
+            print(data)
 
             # Store the data
             if GPU:
@@ -806,9 +807,11 @@ def update_all_word_weights(option, day, time_num):
     | |         | 80  |
 
     '''
-
-    logging.info('Updating word weights for: ' + day + ' {}:{}'.format(time_num*2+8, time_num*2+10) + ' with option: ' + option)
-    print('Updating word weights')
+    if time_num == 0:
+        time_span = ("8:30", "10:00")
+    elif time_num == 1:
+        time_span = ()
+    print('Updating word weights for ')
 
     # If the weighting arrays are empty, create them
     if len(words_by_letter) == 0 or words_by_letter == 0:
@@ -928,7 +931,7 @@ def update_word(ticker, option, word_upper, day, time_num):
                 if change > 0:
                     weight = test_data[1]
                     extra1 = test_data[2] + 1
-                    extra2 = test_data[3] + 3
+                    extra2 = test_data[3] + 2
 
                 else:
                     weight = test_data[1]
@@ -966,7 +969,7 @@ def update_word(ticker, option, word_upper, day, time_num):
             if change > 0:
                 weight = 0
                 extra1 = 1
-                extra2 = 3
+                extra2 = 2
             else:
                 weight = 0
                 extra1 = 1
@@ -1236,6 +1239,7 @@ def analyze_weights():
     # If no words have been found with weights return false
     if weight_count == 0:
         logging.error('Could not find any words with weights to analyze')
+        print('Could not find any words with weights to analyze')
         return False
 
     end = time.time()
@@ -1266,6 +1270,11 @@ def analyze_weights():
 
     analysis_cpu_kernel_time.append(cpu)
     analysis_cpu_function_time.append(end_all - start_all)
+
+    print("weight_stdev is {}".format(weight_stdev))
+    print("weight_stdev_o is {}".format(weight_stdev_o))
+    print("weight_average is {}".format(weight_average))
+    print("weight_average_o is {}".format(weight_average_o))
 
     logging.debug('- Analysis finished with:')
     logging.debug('-- avg: ' + str(weight_average))
@@ -1431,7 +1440,7 @@ Step 4.5 is to get the weighting of a word. This is used for evaluating the stoc
 def get_word_weight(word_upper):
     # Make the word lowercase and get the length of the word
     word = word_upper.lower()
-    len_word = len(word)
+    # len_word = len(word)
 
     # Find the letter index for the words array
     index = ord(word[:1]) - 97
@@ -1444,7 +1453,7 @@ def get_word_weight(word_upper):
     num_letter_words = num_words_by_letter[index]
 
     # Search that array for the current word
-    found = False
+    # found = False
     for ii in range(0, num_letter_words):
 
         # Get the current word data to be compared
@@ -1515,7 +1524,7 @@ can be looked at later to see how the algorithm is improving (if at all).
 '''
 
 
-def predict_movement(day):
+def predict_movement(day, time_num):
 
     global weight_average
     global weight_stdev
@@ -1537,36 +1546,38 @@ def predict_movement(day):
     all_raw_ratings = {}
 
     # Iterate through stocks as predictions are seperate for each
-    for tickers in STOCK_TAGS:
+    for ticker in STOCK_TAGS:
 
-        logging.debug('- Finding prediction for: ' + tickers)
+        logging.debug('- Finding prediction for: ' + ticker)
 
-        all_predictions[tickers] = []
-        all_std_devs[tickers] = []
-        all_probabilities[tickers] = []
-        all_raw_ratings[tickers] = []
+        all_predictions[ticker] = []
+        all_std_devs[ticker] = []
+        all_probabilities[ticker] = []
+        all_raw_ratings[ticker] = []
 
         stock_rating_sum_pred1 = 0
         stock_rating_cnt_pred1 = 0
         stock_rating_sum_pred2 = 0
         stock_rating_cnt_pred2 = 0
 
-        if not tickers in stock_data:
-            logging.warning('- Could not find articles loaded for ' + tickers)
+        if not ticker in stock_data:
+            logging.warning('- Could not find articles loaded for ' + ticker)
             continue
 
         start_all = time.time()
         cpu = 0
-
+        # print(stock_data)
         # Iterate through each article for the stock
-        for articles in stock_data[tickers]:
+        for text in stock_data[ticker]:
 
             # Get the text (ignore link)
-            text = articles[1]
+            print("this is article")
+            print(text)
 
             # Get an array of words with two or more characters for the text
             words_in_text = re.compile('[A-Za-z][A-Za-z][A-Za-z]+').findall(text)
-
+            print("this is words in article")
+            print(words_in_text)
             start = time.time()
 
             # Update the word's info
@@ -1577,65 +1588,83 @@ def predict_movement(day):
                 prediction_outputs_cpu.append(weight)
 
 
+                # # p1 only select weights that are above 0.5 deviation from average_weight
+                # stock_rating_sum_pred1 += weight
+                # stock_rating_cnt_pred1 += 1
+                #
+                # # p2 only select weights that are above 0.5 deviation from average_weight
+                # stock_rating_sum_pred2 += weight
+                # stock_rating_cnt_pred2 += 1
+
                 # p1 only select weights that are above 0.5 deviation from average_weight
-                if weight > weight_stdev + 0.5*weight_average or weight < weight_average - 0.5*weight_stdev:
+                if weight > weight_stdev + 0.5 * weight_average or weight < weight_average - 0.5 * weight_stdev:
                     stock_rating_sum_pred1 += weight
                     stock_rating_cnt_pred1 += 1
 
                 # p2 only select weights that are above 0.5 deviation from average_weight
-                if weight > weight_stdev_o + 0.5*weight_average_o or weight < weight_average_o - 0.5*weight_stdev_o:
+                if weight > weight_stdev_o + 0.5 * weight_average_o or weight < weight_average_o - 0.5 * weight_stdev_o:
                     stock_rating_sum_pred2 += weight
                     stock_rating_cnt_pred2 += 1
 
 
             end = time.time()
             cpu += end - start
-
+        print("stock_rating_sum_pred1 for {} is {}".format(ticker, stock_rating_sum_pred1))
+        print("stock_rating_cnt_pred1 for {} is {}".format(ticker, stock_rating_cnt_pred1))
+        print("stock_rating_sum_pred2 for {} is {}".format(ticker, stock_rating_sum_pred2))
+        print("stock_rating_cnt_pred2 for {} is {}".format(ticker, stock_rating_cnt_pred2))
         # After each word in every article has been examined for that stock, find the average rating
-        stock_rating_pred1 = stock_rating_sum_pred1 / stock_rating_cnt_pred1
-        stock_rating_pred2 = stock_rating_sum_pred2 / stock_rating_cnt_pred2
+        if stock_rating_cnt_pred1 != 0 and stock_rating_cnt_pred2 != 0:
+            stock_rating_pred1 = stock_rating_sum_pred1 / stock_rating_cnt_pred1
+            stock_rating_pred2 = stock_rating_sum_pred2 / stock_rating_cnt_pred2
 
-        # Calculate the number of standard deviations above the mean and find the probability of that for a 'normal' distribution
-        # - Assuming normal because as the word library increases, it should be able to be modeled as normal
-        std_above_avg_pred1 = (stock_rating_pred1 - weight_average) / weight_stdev
-        probability_pred1 = norm(weight_average, weight_stdev).cdf(stock_rating_pred1)
-
-
-        std_above_avg_pred2 = (stock_rating_pred2 - weight_average_o) / weight_stdev_o
-        probability_pred2 = norm(weight_average_o, weight_stdev_o).cdf(stock_rating_pred2)
-
-        end_all = time.time()
-
-        predict_cpu_kernel_time.append(cpu)
-        predict_cpu_function_time.append(end_all - start_all)
+            # Calculate the number of standard deviations above the mean and find the probability of that for a 'normal' distribution
+            # - Assuming normal because as the word library increases, it should be able to be modeled as normal
+            std_above_avg_pred1 = (stock_rating_pred1 - weight_average) / weight_stdev
+            probability_pred1 = norm(weight_average, weight_stdev).cdf(stock_rating_pred1)
 
 
-        # Update the variables for prediction 3 (Which are based off the same stats as prediction 1) in slot 2
-        all_std_devs[tickers].append(std_above_avg_pred1)
-        all_probabilities[tickers].append(probability_pred1)
-        all_raw_ratings[tickers].append(stock_rating_pred1)
+            std_above_avg_pred2 = (stock_rating_pred2 - weight_average_o) / weight_stdev_o
+            probability_pred2 = norm(weight_average_o, weight_stdev_o).cdf(stock_rating_pred2)
 
-        if stock_rating_pred1 > weight_average:
-            all_predictions[tickers].append(1)
-        elif stock_rating_pred1 < weight_average:
-            all_predictions[tickers].append(-1)
+            end_all = time.time()
+
+            predict_cpu_kernel_time.append(cpu)
+            predict_cpu_function_time.append(end_all - start_all)
+
+
+            # Update the variables for prediction 3 (Which are based off the same stats as prediction 1) in slot 2
+            all_std_devs[ticker].append(std_above_avg_pred1)
+            all_probabilities[ticker].append(probability_pred1)
+            all_raw_ratings[ticker].append(stock_rating_pred1)
+
+            if stock_rating_pred1 > weight_average:
+                all_predictions[ticker].append(1)
+            elif stock_rating_pred1 < weight_average:
+                all_predictions[ticker].append(-1)
+            else:
+                all_predictions[ticker].append(0)
+
+
+            # Update the variables for prediction 6 (Which are based off the same stats as prediction 4) in slot 5
+            all_std_devs[ticker].append(std_above_avg_pred2)
+            all_probabilities[ticker].append(probability_pred2)
+            all_raw_ratings[ticker].append(stock_rating_pred2)
+
+            if stock_rating_pred2 > weight_average_o:
+                all_predictions[ticker].append(1)
+            elif stock_rating_pred2 < weight_average_o:
+                all_predictions[ticker].append(-1)
+            else:
+                all_predictions[ticker].append(0)
         else:
-            all_predictions[tickers].append(0)
+            for i in range(2):
+                all_predictions[ticker].append(0)
+                all_std_devs[ticker].append("None")
+                all_probabilities[ticker].append("None")
+                all_raw_ratings[ticker].append("None")
 
-
-        # Update the variables for prediction 6 (Which are based off the same stats as prediction 4) in slot 5
-        all_std_devs[tickers].append(std_above_avg_pred2)
-        all_probabilities[tickers].append(probability_pred2)
-        all_raw_ratings[tickers].append(stock_rating_pred2)
-
-        if stock_rating_pred2 > weight_average_o:
-            all_predictions[tickers].append(1)
-        elif stock_rating_pred2 < weight_average_o:
-            all_predictions[tickers].append(-1)
-        else:
-            all_predictions[tickers].append(0)
-
-    write_predictions_to_file_and_print(day, all_predictions, all_std_devs, all_probabilities, all_raw_ratings)
+    write_predictions_to_file_and_print(day, time_num, all_predictions, all_std_devs, all_probabilities, all_raw_ratings)
 
 
 def predict_movement7(day):
@@ -2078,7 +2107,7 @@ def predict_movement7_gpu(day):
     file.close()
 
 
-def write_predictions_to_file_and_print(day, all_predictions, all_std_devs, all_probabilities, all_raw_ratings):
+def write_predictions_to_file_and_print(day, time_num, all_predictions, all_std_devs, all_probabilities, all_raw_ratings):
 
     global weight_average
     global weight_stdev
@@ -2096,11 +2125,18 @@ def write_predictions_to_file_and_print(day, all_predictions, all_std_devs, all_
     for index in range(0, 2):
 
         # Open file to store todays predictions in
-        file = open('./output/prediction' + str(index+1) +'-' + day + '.txt', 'w')
+        file = open('./output/prediction' + str(index+1) +'-' + day + '.txt', 'a')
 
         # Print the header info and open the file
         # When less than 3, uses normal weight analysis
-        print('')
+        if time_num == 0:
+            file.write('Prediction for time span 8:30 ~ 10:00 \n')
+        elif time_num == 1:
+            file.write('Prediction for time span 10:00 ~ 12:00 \n')
+        elif time_num == 2:
+            file.write('Prediction for time span 12:00 ~ 14:00 \n')
+        else:
+            file.write('Prediction for time span 14:00 ~ 15:30 \n')
         print('PREDICTIONS FOR METHOD ' + str(index + 1) + ' BASED ON:')
 
         if index == 0:
@@ -2134,26 +2170,26 @@ def write_predictions_to_file_and_print(day, all_predictions, all_std_devs, all_
             file.write('- Min: ' + str(weight_min) + '\n\n')
 
         # For each prediction, iterate through the stocks
-        for tickers in STOCK_TAGS:
-
-            if all_predictions[tickers][index] == 1:
+        for ticker in STOCK_TAGS:
+            # print("index is {}".format(index))
+            if all_predictions[ticker][index] == 1:
                 rating = 'buy'
-            elif all_predictions[tickers][index] == -1:
+            elif all_predictions[ticker][index] == -1:
                 rating = 'sell'
             else:
                 rating = 'undecided'
 
             # For each stock, print and write the rating
-            print('RATING FOR: ', tickers)
-            print('\t- STD ABOVE MEAN: ', all_std_devs[tickers][index])
-            print('\t- RAW VAL RATING: ', all_raw_ratings[tickers][index])
-            print('\t- PROBABILITY IS: ', all_probabilities[tickers][index])
+            print('RATING FOR: ', ticker)
+            print('\t- STD ABOVE MEAN: ', all_std_devs[ticker][index])
+            print('\t- RAW VAL RATING: ', all_raw_ratings[ticker][index])
+            print('\t- PROBABILITY IS: ', all_probabilities[ticker][index])
             print('\t- CORRESPONDS TO: ', rating)
 
-            file.write('Prediction for: ' + tickers + ' \n')
-            file.write('- Std above mean: ' + str(all_std_devs[tickers][index]) + '\n')
-            file.write('- Raw val rating: ' + str(all_raw_ratings[tickers][index]) + '\n')
-            file.write('- probability is: ' + str(all_probabilities[tickers][index]) + '\n')
+            file.write('Prediction for: ' + ticker + ' \n')
+            file.write('- Std above mean: ' + str(all_std_devs[ticker][index]) + '\n')
+            file.write('- Raw val rating: ' + str(all_raw_ratings[ticker][index]) + '\n')
+            file.write('- Buy prob is: ' + str(all_probabilities[ticker][index]) + '\n')
             file.write('- Corresponds to: ' + str(rating) + '\n\n')
 
         file.close()
@@ -2167,11 +2203,16 @@ Display help and exit
 def print_help():
     logging.debug('Displaying help and exiting')
     print(
+        'We split trading hours into 0-> 8:30~10:00, 1-> 10:00~12:00, 2-> 12:00~14:00, 3-> 14:00~15:30')
+    print(
+        'To predict stock price based on articles for the day and time_span specified, time_num should be choose from 0~3:')
+    print('\t ./stock_market_prediction.py -p -d mm-dd-yyyy -t time_num\n')
+    print(
         'To update word weights for articles and prices for the day specified, use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -d mm-dd-yyyy\n')
+    print('\t ./stock_market_prediction.py -u -d mm-dd-yyyy\n')
     print(
         'To update word weights for articles and prices for the day specified and time specified(0:8-10,1:10-12,2:12-14,3:14-16), use (must have already pulled weights and prices):')
-    print('\t ./stock_market_prediction.py -d mm-dd-yyyy -t time_num\n')
+    print('\t ./stock_market_prediction.py -u -d mm-dd-yyyy -t time_num\n')
 
     print(
         '\nCurrently available weighting options are opt1 and opt2. opt1 uses average with 1 for a word seen with up and 0 with a word seen with down.\n opt2 uses a Naive Bayes classifier.\n')
@@ -2198,7 +2239,7 @@ def verify_date(date):
     if test_date > today:
         return False
 
-    return test_date
+    return True
 
 
 '''
@@ -2356,27 +2397,40 @@ def load_articles(day, time_num):
         file.readline()
         # Prepare variables to save the article data
         stock_data[ticker] = []
-        need_time = (time_num*2 + 8, time_num*2 + 10)
+        need_time = (time_num*2 + 6, time_num*2 + 8)
         for line in file:
             data = line.strip().rsplit(",", 1)
             # data[0] is the news header and data[1] is the datetime
             date_time = data[1]
-            date = str(parse(date_time.split()[0])).split()[0]
-            # print(date)
-            localtime = date_time.split()[1]
+            date_time = date_time.split()
+            if len(date_time) == 0:
+                continue
+            date = (str(parse(date_time[0])).split())[0]
+            localtime = "00:00" if (len(date_time) == 1) else date_time[1]
             hour = int(localtime.split(":")[0])
             # print(hour)
             if date == day:
-                if time_num != 3:
-                    if hour >= need_time[0] and hour < need_time[1]:
+                # print(data[0], "|||| time_num is {} and actual article hour is {}".format(time_num, hour))
+                if time_num == 0:
+                    if localtime == "8:30":
+                        stock_data[ticker].append(data[0])
+                elif time_num == 1:
+                    if localtime != "8:30" and hour < need_time[1]:
                         stock_data[ticker].append(data[0])
                 else:
-                    # if we load articles for 14-16,we actually load all the aricles after 14 pm
-                    # , because the data is used for tomorrow morning
-                    if hour >= need_time[0]:
+                    if hour >= need_time[0] and hour < need_time[1]:
                         stock_data[ticker].append(data[0])
+                # print("*"*30)
+        # print(stock_data[ticker])
+                # if time_num != 3:
+                #     if hour >= need_time[0] and hour < need_time[1]:
+                #         stock_data[ticker].append(data[0])
+                # else:
+                #     # if we load articles for 14-16,we actually load all the aricles after 14 pm
+                #     # , because the data is used for tomorrow morning
+                #     if hour >= need_time[0]:
+                #         stock_data[ticker].append(data[0])
         # print(current_article)
-        print(stock_data[ticker])
         # if len(stock_data[ticker]) < SUCCESS_THREASHOLD:
         #     logging.error('Could not load the threshold (' + str(
         #         SUCCESS_THREASHOLD) + ') number of articles. Either not saved or another error occured.')
@@ -2385,7 +2439,9 @@ def load_articles(day, time_num):
     return True
 
 
+
 def load_stock_prices():
+
     for ticker in STOCK_TAGS:
         try:
             file = open("./data/price_{}.csv".format(ticker), 'r')
@@ -2394,19 +2450,20 @@ def load_stock_prices():
 
         # skip the first line as it is the header
         file.readline()
-
-        # create stock_prices dic for current stock
         stock_prices[ticker] = {}
+        # create stock_prices dic for current stock
         cur_day = ""
         price_prev = 0
         for line in file:
+            # parse data on the ","
             data = line.strip().split(",")
-            # get price and datetime
+            # get price and datetime, e.g., price = 180.17, date_time = 12/13/21
             price = round(float(data[0]), 2)
             date_time = data[1]
-            # reformat time
+            # reformat time, e.g., date = 12/13/21, localtime = 15:15
             date = str(parse(date_time.split()[0])).split()[0]
             localtime = date_time.split()[1]
+            # formulate date
             if date != cur_day:
                 if price_prev != 0:
                     stock_prices[ticker][cur_day][3].append(price_prev)
@@ -2414,13 +2471,14 @@ def load_stock_prices():
                 cur_hour = 8
                 stock_prices[ticker][date] = {}
                 stock_prices[ticker][date][0] = [price]
+            # formulate price to be 2 hr interval
             hour = int(localtime.split(":")[0])
             if hour != cur_hour and hour != (cur_hour+1):
                 stock_prices[ticker][date][(cur_hour-8)//2].append(price)
                 cur_hour = hour
                 stock_prices[ticker][date][(cur_hour-8)//2] = [price]
             price_prev = price
-        print(stock_prices)
+        stock_prices[ticker][date][(cur_hour - 8) // 2].append(price)
         file.close()
 
 '''
@@ -2498,11 +2556,12 @@ def main():
         if not verify_date(specified_day):
             specified_day = today_str
 
+        specified_day = str(parse(specified_day)).split()[0]
         logging.info('Predicting price movement for: ' + specified_day)
-
+        print('Predicting price movement for: ' + specified_day)
         # Call the proper functions
         load_all_word_weights(weight_opt)
-        if not load_articles(specified_day):
+        if not load_articles(specified_day, time_num):
             print('Error: Could not load articles for: ', specified_day)
             sys.exit(-1)
 
@@ -2519,7 +2578,7 @@ def main():
                     print('Error: Unable to analyze weights')
                     sys.exit(-1)
 
-                predict_movement(specified_day)
+                predict_movement(specified_day, time_num)
 
         elif weight_opt == 'opt2':
             if GPU:
