@@ -5,11 +5,18 @@
 export PATH=/usr/local/cuda-11.4/bin${PATH:+:${PATH}}
 export LD_LIBRARY_PATH=/usr/local/cuda-11.4/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
+required_lang="C.UTF-8"
+if [ "$LANG" != "$required_lang" ]; then
+    export LANG="$required_lang"
+fi
+
+PYPATH="/home/yl4876/envs/poclEnv/bin"
+PY="$PYPATH/python3"
+
 poclEnv() {
-  current=$(pwd)
-  cd ~/envs/poclEnv/bin
+  pushd "$PYPATH"
   source activate
-  cd $current
+  popd
 }
 
 pushd $HOME/workspace/HeterogeneousComputing/data
@@ -23,8 +30,8 @@ echo "$(date)" >> "$log_file"
 
 poclEnv
 pushd $HOME/workspace/HeterogeneousComputing
-python3 ./use_for_test.py -p -d "$current_date" -t $1 | tee -a "$log_file"
-python3 ./use_for_test.py -u -d "$current_date" -t $1
+"$PY" ./use_for_test.py -p -d "$current_date" -t $1 | tee -a "$log_file"
+"$PY" ./use_for_test.py -u -d "$current_date" -t $1
 # python3 ./use_for_test.py -p -d "$current_date" -t $1 | tee -a "$log_file"
 # python3 ./use_for_test.py -u -d "$current_date" -t $1 | tee -a "$log_file"
 popd
