@@ -1,0 +1,420 @@
+Wed Dec 15 13:10:04 EST 2021
+Predicting price movement for: 2021-12-15
+Loading word weights
+['-', 'ads', '0.0', '12', '24']
+['-', 'and', '0.0', '24', '24']
+['-', 'alternatives', '0.0', '12', '0']
+['-', 'according', '0.0', '12', '0']
+['-', 'asset', '0.0', '24', '0']
+['-', 'activision', '0.0', '24', '0']
+['-', 'amd', '0.0', '24', '0']
+['-', 'after', '0.0', '24', '0']
+['-', 'ahead', '0.0', '12', '0']
+['-', 'apple', '0.0', '12', '0']
+['-', 'augmented', '0.0', '12', '0']
+['-', 'advantage', '0.0', '24', '24']
+['-', 'all', '0.0', '12', '24']
+['-', 'arm', '0.0', '12', '24']
+['-', 'announces', '0.0', '12', '24']
+['-', 'availability', '0.0', '12', '24']
+['-', 'advisers', '0.0', '12', '0']
+['-', 'buys', '0.0', '132', '120']
+['-', 'biggest', '0.0', '12', '24']
+['-', 'bill', '0.0', '12', '24']
+['-', 'baxter', '0.0', '12', '24']
+['-', 'buyback', '0.0', '12', '0']
+['-', 'boost', '0.0', '12', '0']
+['-', 'bitcoin', '0.0', '12', '0']
+['-', 'buy', '0.0', '60', '24']
+['-', 'billionaire', '0.0', '12', '0']
+['-', 'business', '0.0', '24', '0']
+['-', 'blizzard', '0.0', '24', '0']
+['-', 'beat', '0.0', '12', '0']
+['-', 'booking', '0.0', '12', '24']
+['-', 'blackrock', '0.0', '12', '24']
+['-', 'band', '0.0', '12', '24']
+['-', 'beach', '0.0', '12', '24']
+['-', 'bumblebee', '0.0', '12', '24']
+['-', 'croci', '0.0', '48', '48']
+['-', 'climbed', '0.0', '12', '24']
+['-', 'calls', '0.0', '12', '24']
+['-', 'choice', '0.0', '12', '24']
+['-', 'capital', '0.0', '12', '24']
+['-', 'companies', '0.0', '36', '24']
+['-', 'continue', '0.0', '12', '0']
+['-', 'cheap', '0.0', '12', '0']
+['-', 'cohen', '0.0', '12', '0']
+['-', 'charts', '0.0', '12', '0']
+['-', 'corp', '0.0', '36', '24']
+['-', 'chipmaker', '0.0', '12', '0']
+['-', 'citi', '0.0', '12', '0']
+['-', 'cap', '0.0', '12', '24']
+['-', 'could', '0.0', '12', '24']
+['-', 'concludes', '0.0', '12', '24']
+['-', 'dws', '0.0', '48', '48']
+['-', 'determine', '0.0', '12', '24']
+['-', 'dow', '0.0', '48', '0']
+['-', 'drops', '0.0', '12', '0']
+['-', 'drive', '0.0', '12', '0']
+['-', 'deployment', '0.0', '12', '24']
+['-', 'etfs', '0.0', '24', '24']
+['-', 'environmentally', '0.0', '12', '0']
+['-', 'entire', '0.0', '12', '0']
+['-', 'earnings', '0.0', '24', '24']
+['-', 'expects', '0.0', '12', '0']
+['-', 'elon', '0.0', '12', '0']
+['-', 'for', '0.0', '48', '72']
+['-', 'fund', '0.0', '60', '48']
+['-', 'future', '0.0', '12', '24']
+['-', 'friendly', '0.0', '12', '0']
+['-', 'futures', '0.0', '24', '0']
+['-', 'fall', '0.0', '12', '0']
+['-', 'fed', '0.0', '48', '0']
+['-', 'fix', '0.0', '12', '0']
+['-', 'falls', '0.0', '12', '0']
+['-', 'fresh', '0.0', '12', '24']
+['-', 'great', '0.0', '24', '48']
+['-', 'glenview', '0.0', '12', '24']
+['-', 'growth', '0.0', '12', '0']
+['-', 'guidance', '0.0', '12', '0']
+['-', 'gamble', '0.0', '24', '48']
+['-', 'gartner', '0.0', '12', '0']
+['-', 'holdings', '0.0', '60', '72']
+['-', 'heavyweight', '0.0', '12', '0']
+['-', 'hot', '0.0', '36', '0']
+['-', 'has', '0.0', '12', '24']
+['-', 'high', '0.0', '24', '48']
+['-', 'harmonic', '0.0', '12', '24']
+['-', 'hlit', '0.0', '12', '24']
+['-', 'hits', '0.0', '12', '24']
+['-', 'hear', '0.0', '12', '24']
+['-', 'investors', '0.0', '36', '48']
+['-', 'inc', '0.0', '192', '168']
+['-', 'include', '0.0', '12', '24']
+['-', 'investment', '0.0', '12', '24']
+['-', 'inflation', '0.0', '36', '0']
+['-', 'internet', '0.0', '12', '0']
+['-', 'international', '0.0', '24', '0']
+['-', 'invesco', '0.0', '12', '0']
+['-', 'intel', '0.0', '12', '0']
+['-', 'its', '0.0', '12', '24']
+['-', 'interactive', '0.0', '12', '0']
+['-', 'johnson', '0.0', '48', '48']
+['-', 'jones', '0.0', '48', '0']
+['-', 'looms', '0.0', '36', '0']
+['-', 'log', '0.0', '12', '0']
+['-', 'large', '0.0', '12', '24']
+['-', 'life', '0.0', '12', '24']
+['-', 'metaverse', '0.0', '48', '72']
+['-', 'mean', '0.0', '24', '24']
+['-', 'meta', '0.0', '72', '96']
+['-', 'monday', '0.0', '12', '24']
+['-', 'management', '0.0', '36', '24']
+['-', 'meeting', '0.0', '48', '0']
+['-', 'musk', '0.0', '48', '0']
+['-', 'more', '0.0', '48', '0']
+['-', 'microsoft', '0.0', '12', '0']
+['-', 'machines', '0.0', '24', '0']
+['-', 'main', '0.0', '12', '0']
+['-', 'market', '0.0', '12', '0']
+['-', 'most', '0.0', '12', '24']
+['-', 'mic', '0.0', '12', '24']
+['-', 'new', '0.0', '24', '24']
+['-', 'nintendo', '0.0', '12', '24']
+['-', 'nfts', '0.0', '12', '0']
+['-', 'national', '0.0', '12', '24']
+['-', 'nvidia', '0.0', '12', '24']
+['-', 'near', '0.0', '12', '24']
+['-', 'online', '0.0', '12', '24']
+['-', 'off', '0.0', '12', '0']
+['-', 'ohio', '0.0', '12', '24']
+['-', 'platforms', '0.0', '72', '96']
+['-', 'plc', '0.0', '12', '24']
+['-', 'participate', '0.0', '12', '0']
+['-', 'plan', '0.0', '12', '0']
+['-', 'point', '0.0', '24', '0']
+['-', 'procter', '0.0', '24', '48']
+['-', 'portfolio', '0.0', '12', '24']
+['-', 'pick', '0.0', '12', '24']
+['-', 'peloton', '0.0', '12', '0']
+['-', 'question', '0.0', '12', '24']
+['-', 'quarter', '0.0', '12', '0']
+['-', 'qualcomm', '0.0', '36', '72']
+['-', 'qcom', '0.0', '12', '24']
+['-', 'reasons', '0.0', '24', '48']
+['-', 'rules', '0.0', '12', '24']
+['-', 'report', '0.0', '48', '0']
+['-', 'reverses', '0.0', '12', '0']
+['-', 'read', '0.0', '12', '0']
+['-', 'rise', '0.0', '12', '0']
+['-', 'reality', '0.0', '12', '0']
+['-', 'room', '0.0', '12', '24']
+['-', 'run', '0.0', '12', '24']
+['-', 'stock', '0.0', '84', '96']
+['-', 'single', '0.0', '12', '24']
+['-', 'scam', '0.0', '12', '24']
+['-', 'safety', '0.0', '12', '24']
+['-', 'synopsys', '0.0', '12', '0']
+['-', 'snps', '0.0', '12', '0']
+['-', 'shareholders', '0.0', '12', '0']
+['-', 'sells', '0.0', '72', '24']
+['-', 'shares', '0.0', '36', '0']
+['-', 'stocks', '0.0', '24', '0']
+['-', 'steve', '0.0', '12', '0']
+['-', 'scramble', '0.0', '12', '0']
+['-', 'software', '0.0', '12', '0']
+['-', 'skids', '0.0', '24', '0']
+['-', 'street', '0.0', '12', '0']
+['-', 'salesforce', '0.0', '12', '0']
+['-', 'storage', '0.0', '12', '24']
+['-', 'surged', '0.0', '12', '24']
+['-', 'share', '0.0', '12', '24']
+['-', 'surprised', '0.0', '12', '24']
+['-', 'season', '0.0', '12', '24']
+['-', 'ses', '0.0', '12', '24']
+['-', 'spectrum', '0.0', '12', '24']
+['-', 'still', '0.0', '12', '24']
+['-', 'technologies', '0.0', '60', '72']
+['-', 'the', '0.0', '60', '120']
+['-', 'that', '0.0', '36', '48']
+['-', 'trillion', '0.0', '12', '24']
+['-', 'tighten', '0.0', '12', '24']
+['-', 'towers', '0.0', '12', '24']
+['-', 'tesla', '0.0', '48', '0']
+['-', 'tech', '0.0', '12', '0']
+['-', 'threatens', '0.0', '12', '0']
+['-', 'third', '0.0', '12', '0']
+['-', 'top', '0.0', '12', '24']
+['-', 'them', '0.0', '12', '24']
+['-', 'this', '0.0', '12', '24']
+['-', 'time', '0.0', '12', '24']
+['-', 'there', '0.0', '12', '24']
+['-', 'turtle', '0.0', '12', '24']
+['-', 'uber', '0.0', '12', '24']
+['-', 'upgraded', '0.0', '12', '0']
+['-', 'uipath', '0.0', '12', '0']
+['-', 'vip', '0.0', '24', '24']
+['-', 'vulnerability', '0.0', '12', '0']
+['-', 'view', '0.0', '12', '0']
+['-', 'value', '0.0', '12', '24']
+['-', 'what', '0.0', '24', '24']
+['-', 'why', '0.0', '36', '48']
+['-', 'willis', '0.0', '12', '24']
+['-', 'watson', '0.0', '12', '24']
+['-', 'wealth', '0.0', '12', '0']
+['-', 'watch', '0.0', '12', '0']
+['-', 'xanthus', '0.0', '12', '0']
+{'FB': ['Is Roblox Stock A Buy Right Now As It Reports Key November Metrics?', '4 Monster Metaverse Stocks to Buy for the Long Haul', 'Facebook Metaverse FACEMETA Token Rallies by Over 50%'], 'MSFT': ['Is Roblox Stock A Buy Right Now As It Reports Key November Metrics?'], 'AAPL': [], 'NVDA': [], 'AMD': ["Adobe's (ADBE) Creative Cloud Express to Expand Creator Base", '"VanEck Video Gaming and eSports ETF Buys Ubisoft Entertainment, Sells NVIDIA Corp, Advanced ..."', '"Large Company Growth Portfolio Buys Tesla Inc, Advanced Micro Devices Inc, Vertex ..."'], 'XLNX': ['Expect ‘less growth going forward by the Fed accommodative stance’: Expert', 'Here come the dividends', 'Can AMD Go on a Rally Like Nvidia and Hit All-Time Highs?', '"Morgan Stanley leads banks higher, AMD-Xilinx merger is a go, Mexico bans crypto"', "Don't Blink Or You'll Miss Today's 2 Key Nasdaq Winners", 'NVIDIA and AMD: Digital Flywheels of Super-Exponential Innovation', 'Advanced Micro Cleared by EU to Acquire Xilinx for $35B', 'Xilinx (NASDAQ:XLNX) Has Gifted Shareholders With A Fantastic 246% Total Return On Their Investment', 'Is AMD Stock Heading to $135?'], 'QCOM': ['"VanEck Morningstar Durable Dividend ETF Buys Texas Instruments Inc, Qualcomm Inc, Williams Inc, ..."', '"Tributary Balanced Fund Buys Qualcomm Inc, Rent-A-Center Inc, Paycom Software Inc, Sells ..."', '"Large Company Growth Portfolio Buys Tesla Inc, Advanced Micro Devices Inc, Vertex ..."', 'Qualcomm Inc (QCOM) President & CEO Cristiano R Amon Sold $1 million of Shares', "TD SYNNEX's (SNX) Hyve Adds Micron 7400 NVMe SSD to Polaris 9219"], 'MU': ["TD SYNNEX's (SNX) Hyve Adds Micron 7400 NVMe SSD to Polaris 9219"]}
+Analyzing weights
+weight_stdev is 0.9336464365179741
+weight_stdev_o is 0.8139691780822045
+weight_average is 0.963186936216493
+weight_average_o is 0.8845070422535212
+this is article
+Is Roblox Stock A Buy Right Now As It Reports Key November Metrics?
+this is words in article
+['Roblox', 'Stock', 'Buy', 'Right', 'Now', 'Reports', 'Key', 'November', 'Metrics']
+this is article
+4 Monster Metaverse Stocks to Buy for the Long Haul
+this is words in article
+['Monster', 'Metaverse', 'Stocks', 'Buy', 'for', 'the', 'Long', 'Haul']
+this is article
+Facebook Metaverse FACEMETA Token Rallies by Over 50%
+this is words in article
+['Facebook', 'Metaverse', 'FACEMETA', 'Token', 'Rallies', 'Over']
+stock_rating_sum_pred1 for FB is 7.300000011920929
+stock_rating_cnt_pred1 for FB is 7
+stock_rating_sum_pred2 for FB is 7.300000011920929
+stock_rating_cnt_pred2 for FB is 7
+this is article
+Is Roblox Stock A Buy Right Now As It Reports Key November Metrics?
+this is words in article
+['Roblox', 'Stock', 'Buy', 'Right', 'Now', 'Reports', 'Key', 'November', 'Metrics']
+stock_rating_sum_pred1 for MSFT is 0.4000000059604645
+stock_rating_cnt_pred1 for MSFT is 1
+stock_rating_sum_pred2 for MSFT is 0.4000000059604645
+stock_rating_cnt_pred2 for MSFT is 1
+stock_rating_sum_pred1 for AAPL is 0
+stock_rating_cnt_pred1 for AAPL is 0
+stock_rating_sum_pred2 for AAPL is 0
+stock_rating_cnt_pred2 for AAPL is 0
+stock_rating_sum_pred1 for NVDA is 0
+stock_rating_cnt_pred1 for NVDA is 0
+stock_rating_sum_pred2 for NVDA is 0
+stock_rating_cnt_pred2 for NVDA is 0
+this is article
+Adobe's (ADBE) Creative Cloud Express to Expand Creator Base
+this is words in article
+['Adobe', 'ADBE', 'Creative', 'Cloud', 'Express', 'Expand', 'Creator', 'Base']
+this is article
+"VanEck Video Gaming and eSports ETF Buys Ubisoft Entertainment, Sells NVIDIA Corp, Advanced ..."
+this is words in article
+['VanEck', 'Video', 'Gaming', 'and', 'eSports', 'ETF', 'Buys', 'Ubisoft', 'Entertainment', 'Sells', 'NVIDIA', 'Corp', 'Advanced']
+this is article
+"Large Company Growth Portfolio Buys Tesla Inc, Advanced Micro Devices Inc, Vertex ..."
+this is words in article
+['Large', 'Company', 'Growth', 'Portfolio', 'Buys', 'Tesla', 'Inc', 'Advanced', 'Micro', 'Devices', 'Inc', 'Vertex']
+stock_rating_sum_pred1 for AMD is 6.333333343267441
+stock_rating_cnt_pred1 for AMD is 6
+stock_rating_sum_pred2 for AMD is 6.333333343267441
+stock_rating_cnt_pred2 for AMD is 6
+this is article
+Expect ‘less growth going forward by the Fed accommodative stance’: Expert
+this is words in article
+['Expect', 'less', 'growth', 'going', 'forward', 'the', 'Fed', 'accommodative', 'stance', 'Expert']
+this is article
+Here come the dividends
+this is words in article
+['Here', 'come', 'the', 'dividends']
+this is article
+Can AMD Go on a Rally Like Nvidia and Hit All-Time Highs?
+this is words in article
+['Can', 'AMD', 'Rally', 'Like', 'Nvidia', 'and', 'Hit', 'All', 'Time', 'Highs']
+this is article
+"Morgan Stanley leads banks higher, AMD-Xilinx merger is a go, Mexico bans crypto"
+this is words in article
+['Morgan', 'Stanley', 'leads', 'banks', 'higher', 'AMD', 'Xilinx', 'merger', 'Mexico', 'bans', 'crypto']
+this is article
+Don't Blink Or You'll Miss Today's 2 Key Nasdaq Winners
+this is words in article
+['Don', 'Blink', 'You', 'Miss', 'Today', 'Key', 'Nasdaq', 'Winners']
+this is article
+NVIDIA and AMD: Digital Flywheels of Super-Exponential Innovation
+this is words in article
+['NVIDIA', 'and', 'AMD', 'Digital', 'Flywheels', 'Super', 'Exponential', 'Innovation']
+this is article
+Advanced Micro Cleared by EU to Acquire Xilinx for $35B
+this is words in article
+['Advanced', 'Micro', 'Cleared', 'Acquire', 'Xilinx', 'for']
+this is article
+Xilinx (NASDAQ:XLNX) Has Gifted Shareholders With A Fantastic 246% Total Return On Their Investment
+this is words in article
+['Xilinx', 'NASDAQ', 'XLNX', 'Has', 'Gifted', 'Shareholders', 'With', 'Fantastic', 'Total', 'Return', 'Their', 'Investment']
+this is article
+Is AMD Stock Heading to $135?
+this is words in article
+['AMD', 'Stock', 'Heading']
+stock_rating_sum_pred1 for XLNX is 17.5
+stock_rating_cnt_pred1 for XLNX is 16
+stock_rating_sum_pred2 for XLNX is 17.5
+stock_rating_cnt_pred2 for XLNX is 16
+this is article
+"VanEck Morningstar Durable Dividend ETF Buys Texas Instruments Inc, Qualcomm Inc, Williams Inc, ..."
+this is words in article
+['VanEck', 'Morningstar', 'Durable', 'Dividend', 'ETF', 'Buys', 'Texas', 'Instruments', 'Inc', 'Qualcomm', 'Inc', 'Williams', 'Inc']
+this is article
+"Tributary Balanced Fund Buys Qualcomm Inc, Rent-A-Center Inc, Paycom Software Inc, Sells ..."
+this is words in article
+['Tributary', 'Balanced', 'Fund', 'Buys', 'Qualcomm', 'Inc', 'Rent', 'Center', 'Inc', 'Paycom', 'Software', 'Inc', 'Sells']
+this is article
+"Large Company Growth Portfolio Buys Tesla Inc, Advanced Micro Devices Inc, Vertex ..."
+this is words in article
+['Large', 'Company', 'Growth', 'Portfolio', 'Buys', 'Tesla', 'Inc', 'Advanced', 'Micro', 'Devices', 'Inc', 'Vertex']
+this is article
+Qualcomm Inc (QCOM) President & CEO Cristiano R Amon Sold $1 million of Shares
+this is words in article
+['Qualcomm', 'Inc', 'QCOM', 'President', 'CEO', 'Cristiano', 'Amon', 'Sold', 'million', 'Shares']
+this is article
+TD SYNNEX's (SNX) Hyve Adds Micron 7400 NVMe SSD to Polaris 9219
+this is words in article
+['SYNNEX', 'SNX', 'Hyve', 'Adds', 'Micron', 'NVMe', 'SSD', 'Polaris']
+stock_rating_sum_pred1 for QCOM is 12.33333334326744
+stock_rating_cnt_pred1 for QCOM is 11
+stock_rating_sum_pred2 for QCOM is 12.33333334326744
+stock_rating_cnt_pred2 for QCOM is 11
+this is article
+TD SYNNEX's (SNX) Hyve Adds Micron 7400 NVMe SSD to Polaris 9219
+this is words in article
+['SYNNEX', 'SNX', 'Hyve', 'Adds', 'Micron', 'NVMe', 'SSD', 'Polaris']
+stock_rating_sum_pred1 for MU is 0
+stock_rating_cnt_pred1 for MU is 0
+stock_rating_sum_pred2 for MU is 0
+stock_rating_cnt_pred2 for MU is 0
+PREDICTIONS FOR METHOD 1 BASED ON:
+	- AVG:  0.963186936216493
+	- STD:  0.9336464365179741
+RATING FOR:  FB
+	- STD ABOVE MEAN:  0.08533231127702796
+	- RAW VAL RATING:  1.0428571445601327
+	- PROBABILITY IS:  0.5340013977392475
+	- CORRESPONDS TO:  buy
+RATING FOR:  MSFT
+	- STD ABOVE MEAN:  -0.6032122099200946
+	- RAW VAL RATING:  0.4000000059604645
+	- PROBABILITY IS:  0.27318376304347325
+	- CORRESPONDS TO:  sell
+RATING FOR:  AAPL
+	- STD ABOVE MEAN:  None
+	- RAW VAL RATING:  None
+	- PROBABILITY IS:  None
+	- CORRESPONDS TO:  undecided
+RATING FOR:  NVDA
+	- STD ABOVE MEAN:  None
+	- RAW VAL RATING:  None
+	- PROBABILITY IS:  None
+	- CORRESPONDS TO:  undecided
+RATING FOR:  AMD
+	- STD ABOVE MEAN:  0.09893319074749003
+	- RAW VAL RATING:  1.05555555721124
+	- PROBABILITY IS:  0.5394043421178736
+	- CORRESPONDS TO:  buy
+RATING FOR:  XLNX
+	- STD ABOVE MEAN:  0.1398420844087841
+	- RAW VAL RATING:  1.09375
+	- PROBABILITY IS:  0.5556076192873383
+	- CORRESPONDS TO:  buy
+RATING FOR:  QCOM
+	- STD ABOVE MEAN:  0.16925591928362338
+	- RAW VAL RATING:  1.1212121221152218
+	- PROBABILITY IS:  0.5672023265099708
+	- CORRESPONDS TO:  buy
+RATING FOR:  MU
+	- STD ABOVE MEAN:  None
+	- RAW VAL RATING:  None
+	- PROBABILITY IS:  None
+	- CORRESPONDS TO:  undecided
+PREDICTIONS FOR METHOD 2 BASED ON:
+	- AVG:  0.8845070422535212
+	- STD:  0.8139691780822045
+RATING FOR:  FB
+	- STD ABOVE MEAN:  0.19454066145317778
+	- RAW VAL RATING:  1.0428571445601327
+	- PROBABILITY IS:  0.5771237196969382
+	- CORRESPONDS TO:  buy
+RATING FOR:  MSFT
+	- STD ABOVE MEAN:  -0.5952400279266168
+	- RAW VAL RATING:  0.4000000059604645
+	- PROBABILITY IS:  0.275841518703716
+	- CORRESPONDS TO:  sell
+RATING FOR:  AAPL
+	- STD ABOVE MEAN:  None
+	- RAW VAL RATING:  None
+	- PROBABILITY IS:  None
+	- CORRESPONDS TO:  undecided
+RATING FOR:  NVDA
+	- STD ABOVE MEAN:  None
+	- RAW VAL RATING:  None
+	- PROBABILITY IS:  None
+	- CORRESPONDS TO:  undecided
+RATING FOR:  AMD
+	- STD ABOVE MEAN:  0.2101412677083509
+	- RAW VAL RATING:  1.05555555721124
+	- PROBABILITY IS:  0.5832212912402857
+	- CORRESPONDS TO:  buy
+RATING FOR:  XLNX
+	- STD ABOVE MEAN:  0.257064964350956
+	- RAW VAL RATING:  1.09375
+	- PROBABILITY IS:  0.6014356883625045
+	- CORRESPONDS TO:  buy
+RATING FOR:  QCOM
+	- STD ABOVE MEAN:  0.29080349260816274
+	- RAW VAL RATING:  1.1212121221152218
+	- PROBABILITY IS:  0.6143991929906611
+	- CORRESPONDS TO:  buy
+RATING FOR:  MU
+	- STD ABOVE MEAN:  None
+	- RAW VAL RATING:  None
+	- PROBABILITY IS:  None
+	- CORRESPONDS TO:  undecided
+
+Done
