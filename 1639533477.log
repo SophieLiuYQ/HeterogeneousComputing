@@ -1,0 +1,15 @@
+Tue Dec 14 20:57:57 EST 2021
+We split trading hours into 0-> 8:30~10:00, 1-> 10:00~12:00, 2-> 12:00~14:00, 3-> 14:00~15:30
+To predict stock price based on articles for the day and time_span specified, time_num should be choose from 0~3:
+	 ./use_for_test.py -p -d mm-dd-yyyy -t time_num
+
+To update word weights for articles and prices for the day specified, use (must have already pulled weights and prices):
+	 ./use_for_test.py -u -d mm-dd-yyyy
+
+To update word weights for articles and prices for the day specified and time specified(0:8-10,1:10-12,2:12-14,3:14-16), use (must have already pulled weights and prices):
+	 ./use_for_test.py -u -d mm-dd-yyyy -t time_num
+
+
+Currently available weighting options are opt1 and opt2. opt1 uses average with 1 for a word seen with up and 0 with a word seen with down.
+ opt2 uses a Naive Bayes classifier.
+
