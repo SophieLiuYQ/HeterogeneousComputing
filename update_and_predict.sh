@@ -19,9 +19,11 @@ popd
 log_file="$HOME/logs/$(date +%s).log"
 current_date="$(date +"%m-%d-%Y")"
 
+echo "$(date)" >> "$log_file"
+
 poclEnv
 pushd $HOME/workspace/HeterogeneousComputing
-python3 ./use_for_test.py -p -d "$current_date" -t $1 | tee "$log_file"
+python3 ./use_for_test.py -p -d "$current_date" -t $1 | tee -a "$log_file"
 python3 ./use_for_test.py -u -d "$current_date" -t $1
 # python3 ./use_for_test.py -p -d "$current_date" -t $1 | tee -a "$log_file"
 # python3 ./use_for_test.py -u -d "$current_date" -t $1 | tee -a "$log_file"
