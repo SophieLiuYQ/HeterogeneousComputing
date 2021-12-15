@@ -6,7 +6,7 @@
 ####################################################################################################
 
 # Specifies GPU/CPU calculations will be prepformed
-GPU = False
+GPU = True
 
 if GPU:
     import pyopencl as cl
@@ -495,6 +495,7 @@ __kernel void update(__global char* words, volatile __global int* word_bitmap, v
                 {
                     atomic_inc(weights + weight_index_int + 5);
                     atomic_inc(weights + weight_index_int + 6);
+                    atomic_inc(weights + weight_index_int + 6);
                 }
                 else
                 {
@@ -619,38 +620,6 @@ Evening Update Step
 Step 8 is to pull all stock data for the current day and add it to the stock prices data structure. The yahoo finance api is used
 for this and open and close prices are all thats kept.
 '''
-
-
-# def update_today_stock_prices():
-#
-#     today = datetime.datetime.now()
-#     today_str = str(today.year) + '-' + str(today.month) + '-' + str(today.day)
-#
-#     logging.info('Pulling stock prices for: ' + today_str)
-#     print('Pulling stock prices')
-#
-#     # For each stock, get todays value
-#     for ticker in STOCK_TAGS:
-#
-#         logging.debug('Pulling price data for: ' + ticker)
-#         file = open("./past_data/{}.csv".format(ticker), 'a')
-#
-#         # If the stock is not in the stock prices, add it
-#         # if ticker not in stock_prices:
-#         #     stock_price[tickers] = {}
-#
-#         # Get stock's open and close for today
-#         open_p, high_p, low_p, close_p, adj_price, volume = get_stock_data_for_today(ticker)
-#         csv_write = csv.writer(out,dialect='excel')
-#         csv_write.writerow([today_str, open_p, high_p, low_p, close_p, adj_price, volume])
-#         # logging.debug('Price for: ' + tickers + ' is open: ' + str(open_p) + ', close: ' + str(close_p))
-#         file.close()
-#
-#
-# def get_stock_data_for_today(ticker):
-#     # Make the request to google finance for the ticker and get its raw html
-#     # should return all the values needed for the ticker for current day
-#     pass
 
 
 
@@ -779,8 +748,7 @@ def load_all_word_weights(option):
             # Store the data
             if GPU:
                 struct.pack_into('16s f i i', words_by_letter[letter_index], num_words_by_letter[letter_index] * 28,
-                                 data[1].decode('ascii', 'ignore').encode('utf-8'), float(data[2]), int(data[3]),
-                                 int(data[4]))
+                                 data[1].encode('ascii').decode('ascii', 'ignore').encode('utf-8'), float(data[2]), int(data[3]), int(data[4]))
             else:
                 struct.pack_into('16s f i i', words_by_letter[letter_index], num_words_by_letter[letter_index] * 28,
                                  data[1].encode('utf-8'), float(data[2]), int(data[3]), int(data[4]))
@@ -810,8 +778,12 @@ def update_all_word_weights(option, day, time_num):
     if time_num == 0:
         time_span = ("8:30", "10:00")
     elif time_num == 1:
-        time_span = ()
-    print('Updating word weights for ')
+        time_span = ("10:00", "12:00")
+    elif time_num == 2:
+        time_span = ("12:00", "14:00")
+    else:
+        time_span = ("14:00", "15:30")
+    print('Updating word weights for {} ~ {}'.format(time_span[0], time_span[1]))
 
     # If the weighting arrays are empty, create them
     if len(words_by_letter) == 0 or words_by_letter == 0:
@@ -995,7 +967,7 @@ def update_word(ticker, option, word_upper, day, time_num):
                 extra2))
 
 
-def update_all_word_weights_gpu(option, day):
+def update_all_word_weights_gpu(option, day, time_num):
     '''
     | |
     |_|
@@ -1006,9 +978,15 @@ def update_all_word_weights_gpu(option, day):
     | |         | 80  |
 
     '''
-
-    logging.info('Updating word weights for: ' + day + ' with option: ' + option + ' using the gpu')
-    print('Updating word weights with gpu')
+    if time_num == 0:
+        time_span = ("8:30", "10:00")
+    elif time_num == 1:
+        time_span = ("10:00", "12:00")
+    elif time_num == 2:
+        time_span = ("12:00", "14:00")
+    else:
+        time_span = ("14:00", "15:30")
+    print('Updating word weights with gpu for {} ~ {}'.format(time_span[0], time_span[1]))
 
     # If the weighting arrays are empty, create them
     if len(words_by_letter) == 0 or words_by_letter == 0:
@@ -1023,6 +1001,7 @@ def update_all_word_weights_gpu(option, day):
             num_words_by_letter.append(0)
 
     for ticker in STOCK_TAGS:
+        print("this is {}".format(ticker))
 
         logging.debug('- Updating word weights for: ' + ticker)
 
@@ -1033,7 +1012,7 @@ def update_all_word_weights_gpu(option, day):
         start_all = time.time()
 
         # Determine the direction the stock took on the day in question
-        change = stock_prices[ticker][day][1] - stock_prices[ticker][day][0]
+        change = stock_prices[ticker][day][time_num][1] - stock_prices[ticker][day][time_num][0]
         if change > 0:
             direction = 1
         else:
@@ -1042,68 +1021,68 @@ def update_all_word_weights_gpu(option, day):
         words_in_text = []
 
         # For each stock, iterate through the articles
-        for articles in stock_data[ticker]:
-            # Get the text (ignore link)
-            text = articles[1]
+        for text in stock_data[ticker]:
 
             # Get an array of words with three or more characters for the text
             words_in_text += re.compile('[A-Za-z][A-Za-z][A-Za-z]+').findall(text)
+        if len(words_in_text) != 0:
+            
 
         # Store the words to be read by the kernel
-        word_data = bytearray(len(words_in_text) * 16)
-        for ii, word in enumerate(words_in_text):
-            struct.pack_into('16s', word_data, ii * 16, word.lower().encode('utf-8'))
+            word_data = bytearray(len(words_in_text) * 16)
+            for ii, word in enumerate(words_in_text):
+                struct.pack_into('16s', word_data, ii * 16, word.lower().encode('utf-8'))
 
-        # Prepare the bitmap output buffer
-        word_bitmap = np.zeros((len(words_in_text),), dtype=np.uint32)
+            # Prepare the bitmap output buffer
+            word_bitmap = np.zeros((len(words_in_text),), dtype=np.uint32)
 
-        # Create the buffers for the GPU
-        mf = cl.mem_flags
-        word_data_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=word_data)
-        word_bitmap_buff = cl.Buffer(ctx, mf.WRITE_ONLY | mf.COPY_HOST_PTR, hostbuf=word_bitmap)
-        weights_buff = cl.Buffer(ctx, mf.COPY_HOST_PTR, hostbuf=np.asarray(words_by_letter))
-        weights_char_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=np.asarray(words_by_letter))
-        num_weights_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR,
-                                     hostbuf=np.asarray(num_words_by_letter, dtype=np.int32))
+            # Create the buffers for the GPU
+            mf = cl.mem_flags
+            word_data_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=word_data)
+            word_bitmap_buff = cl.Buffer(ctx, mf.WRITE_ONLY | mf.COPY_HOST_PTR, hostbuf=word_bitmap)
+            weights_buff = cl.Buffer(ctx, mf.COPY_HOST_PTR, hostbuf=np.asarray(words_by_letter))
+            weights_char_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=np.asarray(words_by_letter))
+            num_weights_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR,
+                                         hostbuf=np.asarray(num_words_by_letter, dtype=np.int32))
 
-        # Determine the grid size
-        groups, extra = divmod(len(words_in_text), 256)
-        grid = ((groups + (extra > 0)) * 256, 2560)
+            # Determine the grid size
+            groups, remainder = divmod(len(words_in_text), 256)
+            grid = ((groups + (remainder > 0)) * 256, 2560)
 
-        start = time.time()
+            start = time.time()
 
-        # Call the right kernel
-        if option == 'opt1':
-            update_prg.update(queue, grid, None, word_data_buff, word_bitmap_buff, weights_buff, weights_char_buff,
-                              num_weights_buff, np.uint32(MAX_WORDS_PER_LETTER), np.uint32(len(words_in_text)),
-                              np.uint32(direction))
-        elif option == 'opt2':
-            update_prg.update_bayes(queue, grid, None, word_data_buff, word_bitmap_buff, weights_buff,
-                                    weights_char_buff, num_weights_buff, np.uint32(MAX_WORDS_PER_LETTER),
-                                    np.uint32(len(words_in_text)), np.uint32(direction))
-        else:
-            continue
+            # Call the right kernel
+            if option == 'opt1':
+                update_prg.update(queue, grid, None, word_data_buff, word_bitmap_buff, weights_buff, weights_char_buff,
+                                  num_weights_buff, np.uint32(MAX_WORDS_PER_LETTER), np.uint32(len(words_in_text)),
+                                  np.uint32(direction))
+            elif option == 'opt2':
+                update_prg.update_bayes(queue, grid, None, word_data_buff, word_bitmap_buff, weights_buff,
+                                        weights_char_buff, num_weights_buff, np.uint32(MAX_WORDS_PER_LETTER),
+                                        np.uint32(len(words_in_text)), np.uint32(direction))
+            else:
+                continue
 
-        # Collect the output
-        cl.enqueue_copy(queue, word_bitmap, word_bitmap_buff)
+            # Collect the output
+            cl.enqueue_copy(queue, word_bitmap, word_bitmap_buff)
 
-        for ii in range(0, 26):
-            cl.enqueue_copy(queue, words_by_letter[ii], weights_buff, device_offset=2500 * 28 * ii)
+            for ii in range(0, 26):
+                cl.enqueue_copy(queue, words_by_letter[ii], weights_buff, device_offset=2500 * 28 * ii)
 
-        # Update the words that couldn't be updated by the kernel
-        for ii, bit in enumerate(word_bitmap):
+            # Update the words that couldn't be updated by the kernel
+            for ii, bit in enumerate(word_bitmap):
 
-            # Only update words that couldn't be updated by the kernel
-            # - A full update is still needed (full search) because if one word was not found, then every other identical one will not be found either
-            # - we only want it added once so the other times it will have to be searched.
-            if bit == 0:
-                update_word(ticker, option, words_in_text[ii], day)
+                # Only update words that couldn't be updated by the kernel
+                # - A full update is still needed (full search) because if one word was not found, then every other identical one will not be found either
+                # - we only want it added once so the other times it will have to be searched.
+                if bit == 0:
+                    update_word(ticker, option, words_in_text[ii], day, time_num)
 
-        end = time.time()
-        end_all = time.time()
+            end = time.time()
+            end_all = time.time()
 
-        update_gpu_kernel_time.append(end - start)
-        update_gpu_function_time.append(end_all - start_all)
+            update_gpu_kernel_time.append(end - start)
+            update_gpu_function_time.append(end_all - start_all)
 
     # Add all the weights to the gpu weight array
     # NOTE: This is ONLY for comparison of outputs between GPU and CPU. It has nothing to do with actual computation
@@ -1571,13 +1550,13 @@ def predict_movement(day, time_num):
         for text in stock_data[ticker]:
 
             # Get the text (ignore link)
-            print("this is article")
-            print(text)
+            # print("this is article")
+            # print(text)
 
             # Get an array of words with two or more characters for the text
             words_in_text = re.compile('[A-Za-z][A-Za-z][A-Za-z]+').findall(text)
-            print("this is words in article")
-            print(words_in_text)
+            # print("this is words in article")
+            # print(words_in_text)
             start = time.time()
 
             # Update the word's info
@@ -2645,12 +2624,48 @@ def main():
                         update_all_word_weights(weight_opt, each, tn)
                     stock_data.clear()  # To prepare for the next set of articles
 
+        if GPU:
+            del words_by_letter[:]
+            del num_words_by_letter[:]
+
+            load_all_word_weights(weight_opt)
+            for each in days:
+                if time_num != -1:
+                    logging.info('Updating word weights with the gpu for: ' + each + ' and time span is {}-{}'.format(time_num*2+8, time_num*2+10))
+                    if load_articles(each, time_num):
+                        update_all_word_weights_gpu(weight_opt, each, time_num)
+                    stock_data.clear()
+                else:
+                    for tn in range(4):
+                        logging.info('Updating word weights with the gpu for: ' + each + ' and time span is {}-{}'.format(time_num*2+8, time_num*2+10))
+                        if load_articles(each, time_num):
+                            update_all_word_weights_gpu(weight_opt, each, time_num)
+                        stock_data.clear()
+
 
         # Save data
         logging.info('Saving word weights')
-        save_all_word_weights(weight_opt)
+        # save_all_word_weights(weight_opt)
 
-        logging.info('Updating word weights complete')
+
+
+        # logging.info('Updating word weights complete')
+        if GPU:
+            print("")
+            if len(update_outputs_gpu) != len(update_outputs_cpu):
+                print('Mismatch in number of update outputs between GPU and CPU.')
+            elif len(update_outputs_gpu) > 0:
+                sum_percentage = 0
+                for ii in range(0, len(update_outputs_cpu)):
+
+                    if (update_outputs_cpu[ii] + update_outputs_gpu[ii]) != 0:
+                        percentage = 2 * abs(update_outputs_cpu[ii] - update_outputs_gpu[ii]) / (
+                                    update_outputs_cpu[ii] + update_outputs_gpu[ii])
+
+                        sum_percentage += percentage
+                print('Update Avg Percent Difference: ' + str(sum_percentage * 100 / len(update_outputs_cpu)) + ' %')
+        print(update_outputs_cpu)
+        print(update_outputs_gpu)
 
     print('')
     print('Done')
