@@ -13,3 +13,4 @@ Dec 13 - Xiao's task: modify (use_for_test.py) load_stock_price and load_article
          There is something inconsistent here, need to fix!!!
 Dec 14 - Xiao's task: cpu predict and update word weights are ok, it is correct because when we use old data to predict, the results correspond with stock price change.
          The main point is that when we use new data to predict, how it performs.
+Dec 15-16 Xiao's task: implement gpu kernel for predict movement.
