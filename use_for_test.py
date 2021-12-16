@@ -42,8 +42,7 @@ STOCK_TAGS = ['FB',
               'QCOM',
               'MU']
 
-# STOCK_TAGS = ['MSFT',
-#               'NVDA']
+# STOCK_TAGS = ['NVDA']
 
 ARTICLES_PER_STOCK = 10
 SUCCESS_THREASHOLD = 5
@@ -1576,12 +1575,12 @@ def predict_movement(day, time_num):
                 # stock_rating_cnt_pred2 += 1
 
                 # p1 only select weights that are above 0.5 deviation from average_weight
-                if weight > weight_stdev + 0.5 * weight_average or weight < weight_average - 0.5 * weight_stdev:
+                if weight > weight_stdev + 0.5*weight_average or weight < weight_average - 0.5*weight_stdev:
                     stock_rating_sum_pred1 += weight
                     stock_rating_cnt_pred1 += 1
 
                 # p2 only select weights that are above 0.5 deviation from average_weight
-                if weight > weight_stdev_o + 0.5 * weight_average_o or weight < weight_average_o - 0.5 * weight_stdev_o:
+                if weight > weight_stdev_o + 0.5*weight_average_o or weight < weight_average_o - 0.5*weight_stdev_o:
                     stock_rating_sum_pred2 += weight
                     stock_rating_cnt_pred2 += 1
 
@@ -1612,14 +1611,14 @@ def predict_movement(day, time_num):
             predict_cpu_function_time.append(end_all - start_all)
 
 
-            # Update the variables for prediction 3 (Which are based off the same stats as prediction 1) in slot 2
+            # Update the variables for prediction1
             all_std_devs[ticker].append(std_above_avg_pred1)
             all_probabilities[ticker].append(probability_pred1)
             all_raw_ratings[ticker].append(stock_rating_pred1)
 
-            if stock_rating_pred1 > weight_average:
+            if probability_pred1 >= 0.6:
                 all_predictions[ticker].append(1)
-            elif stock_rating_pred1 < weight_average:
+            elif probability_pred1 <= 0.4:
                 all_predictions[ticker].append(-1)
             else:
                 all_predictions[ticker].append(0)
@@ -1630,9 +1629,9 @@ def predict_movement(day, time_num):
             all_probabilities[ticker].append(probability_pred2)
             all_raw_ratings[ticker].append(stock_rating_pred2)
 
-            if stock_rating_pred2 > weight_average_o:
+            if probability_pred2 >= 0.6:
                 all_predictions[ticker].append(1)
-            elif stock_rating_pred2 < weight_average_o:
+            elif probability_pred1 <= 0.4:
                 all_predictions[ticker].append(-1)
             else:
                 all_predictions[ticker].append(0)
@@ -1743,7 +1742,7 @@ def predict_movement7(day):
     file.close()
 
 
-def predict_movement_gpu(day):
+def predict_movement_gpu(day, time_num):
     global weight_average
     global weight_stdev
     global weight_sum
@@ -1764,191 +1763,174 @@ def predict_movement_gpu(day):
     all_raw_ratings = {}
 
     # Iterate through stocks as predictions are seperate for each
-    for tickers in STOCK_TAGS:
+    for ticker in STOCK_TAGS:
 
-        logging.debug('- Finding prediction for: ' + tickers)
+        logging.debug('- Finding prediction for: ' + ticker)
+        print("this is for predicting {}".format(ticker))
 
-        all_predictions[tickers] = []
-        all_std_devs[tickers] = []
-        all_probabilities[tickers] = []
-        all_raw_ratings[tickers] = []
+        all_predictions[ticker] = []
+        all_std_devs[ticker] = []
+        all_probabilities[ticker] = []
+        all_raw_ratings[ticker] = []
 
         words_in_text = []
 
-        if not tickers in stock_data:
-            logging.warning('- Could not find articles loaded for ' + tickers)
+        stock_rating_sum_pred1 = 0
+        stock_rating_cnt_pred1 = 0
+        stock_rating_sum_pred2 = 0
+        stock_rating_cnt_pred2 = 0
+
+        if not ticker in stock_data:
+            logging.warning('- Could not find articles loaded for ' + ticker)
             continue
 
         start_all = time.time()
 
         # Iterate through each article for the stock
-        for articles in stock_data[tickers]:
-            # Get the text (ignore link)
-            text = articles[1]
+        for text in stock_data[ticker]:
 
             # Get an array of words with two or more characters for the text
             words_in_text += re.compile('[A-Za-z][A-Za-z][A-Za-z]+').findall(text)
+        print(words_in_text)
+        if len(words_in_text) != 0:
 
-        # Store the words to be read by the kernel
-        word_data = bytearray(len(words_in_text) * 16)
-        for ii, word in enumerate(words_in_text):
-            struct.pack_into('16s', word_data, ii * 16, word.lower().encode('utf-8'))
+            # Store the words to be read by the kernel
+            word_data = bytearray(len(words_in_text) * 16)
+            for ii, word in enumerate(words_in_text):
+                struct.pack_into('16s', word_data, ii * 16, word.lower().encode('utf-8'))
 
-        # Prepare an output buffer
-        out_weights = np.empty((len(words_in_text),), dtype=np.float32)
-        out_weights.fill(-1.0)
+            # Prepare an output buffer
+            out_weights = np.empty((len(words_in_text)), dtype=np.float32)
+            out_weights.fill(3.0)
 
-        # Create the buffers for the GPU
-        mf = cl.mem_flags
-        word_data_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=word_data)
-        weights_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=np.asarray(words_by_letter))
-        weights_char_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=np.asarray(words_by_letter))
-        num_weights_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR,
-                                     hostbuf=np.asarray(num_words_by_letter, dtype=np.int32))
-        out_weights_buff = cl.Buffer(ctx, mf.WRITE_ONLY | mf.COPY_HOST_PTR, hostbuf=out_weights)
+            # Create the buffers for the GPU
+            mf = cl.mem_flags
+            word_data_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=word_data)
+            weights_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=np.asarray(words_by_letter))
+            weights_char_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=np.asarray(words_by_letter))
+            num_weights_buff = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR,
+                                         hostbuf=np.asarray(num_words_by_letter, dtype=np.int32))
+            out_weights_buff = cl.Buffer(ctx, mf.WRITE_ONLY | mf.COPY_HOST_PTR, hostbuf=out_weights)
 
-        # Determine the grid size
-        groups, extra = divmod(len(words_in_text), 256)
-        grid = ((groups + (extra > 0)) * 256, 2560)
+            # Determine the grid size
+            groups, remainder = divmod(len(words_in_text), 256)
+            grid = ((groups + (remainder > 0)) * 256, 2560)
 
-        start = time.time()
+            start = time.time()
 
-        # Call the kernel
-        predict_prg.predict(queue, grid, None, word_data_buff, weights_buff, weights_char_buff, num_weights_buff,
-                            out_weights_buff, np.uint32(MAX_WORDS_PER_LETTER), np.uint32(len(words_in_text)))
+            # Call the kernel
+            predict_prg.predict(queue, grid, None, word_data_buff, weights_buff, weights_char_buff, num_weights_buff,
+                                out_weights_buff, np.uint32(MAX_WORDS_PER_LETTER), np.uint32(len(words_in_text)))
 
-        # Collect the output
-        cl.enqueue_copy(queue, out_weights, out_weights_buff)
+            # Collect the output
+            cl.enqueue_copy(queue, out_weights, out_weights_buff)
 
-        stock_rating_sum_p1 = 0
+            # stock_rating_sum_p1 = 0
 
-        stock_rating_sum_p2 = 0
-        stock_rating_cnt_p2 = 0
+            # stock_rating_sum_p2 = 0
+            # stock_rating_cnt_p2 = 0
 
-        stock_rating_sum_p5 = 0
-        stock_rating_cnt_p5 = 0
+            # stock_rating_sum_p5 = 0
+            # stock_rating_cnt_p5 = 0
+            print(out_weights)
 
-        for w in out_weights:
+            for w in out_weights:
 
-            if w < 0:
-                w = weight_average
+                if w > 2:
+                    w = weight_average
 
-            prediction_outputs_gpu.append(w)
+                prediction_outputs_gpu.append(w)
 
-            # Prediction Method 1, 3, 4, 6
-            stock_rating_sum_p1 += w
+                # Prediction Method 1, 3, 4, 6
+                # stock_rating_sum_pred1 += w
 
-            # Prediction Method 2
-            if w > weight_stdev + weight_average or w < weight_average - weight_stdev:
-                stock_rating_sum_p2 += w
-                stock_rating_cnt_p2 += 1
+                # Prediction Method 1
+                if w > weight_stdev + 0.5*weight_average or w < weight_average - 0.5*weight_stdev:
+                    stock_rating_sum_pred1 += w
+                    stock_rating_cnt_pred1 += 1
 
-            # Prediction Method 5
-            if w > weight_stdev_o + weight_average_o or w < weight_average_o - weight_stdev_o:
-                stock_rating_sum_p5 += w
-                stock_rating_cnt_p5 += 1
+                # Prediction Method 5
+                if w > weight_stdev_o + 0.5*weight_average_o or w < weight_average_o - 0.5*weight_stdev_o:
+                    stock_rating_sum_pred2 += w
+                    stock_rating_cnt_pred2 += 1
 
-        stock_rating_cnt_p1 = len(words_in_text)
+            # stock_rating_cnt_p1 = len(words_in_text)
 
-        end = time.time()
+            end = time.time()
 
-        # After each word in every article has been examined for that stock, find the average rating
-        stock_rating_p1 = stock_rating_sum_p1 / stock_rating_cnt_p1
-        stock_rating_p2 = stock_rating_sum_p2 / stock_rating_cnt_p2
-        stock_rating_p5 = stock_rating_sum_p5 / stock_rating_cnt_p5
+            # After each word in every article has been examined for that stock, find the average rating
+            # stock_rating_p1 = stock_rating_sum_p1 / stock_rating_cnt_p1
+            # stock_rating_p2 = stock_rating_sum_p2 / stock_rating_cnt_p2
+            # stock_rating_p5 = stock_rating_sum_p5 / stock_rating_cnt_p5
 
-        # Calculate the number of standard deviations above the mean and find the probability of that for a 'normal' distribution
-        # - Assuming normal because as the word library increases, it should be able to be modeled as normal
-        std_above_avg_p1 = (stock_rating_p1 - weight_average) / weight_stdev
-        probability_p1 = norm(weight_average, weight_stdev).cdf(stock_rating_p1)
+            # Calculate the number of standard deviations above the mean and find the probability of that for a 'normal' distribution
+            # - Assuming normal because as the word library increases, it should be able to be modeled as normal
+            # std_above_avg_p1 = (stock_rating_p1 - weight_average) / weight_stdev
+            # probability_p1 = norm(weight_average, weight_stdev).cdf(stock_rating_p1)
+            #
+            # std_above_avg_p2 = (stock_rating_p2 - weight_average) / weight_stdev
+            # probability_p2 = norm(weight_average, weight_stdev).cdf(stock_rating_p2)
+            #
+            # std_above_avg_p4 = (stock_rating_p1 - weight_average_o) / weight_stdev_o
+            # probability_p4 = norm(weight_average_o, weight_stdev_o).cdf(stock_rating_p1)
+            #
+            # std_above_avg_p5 = (stock_rating_p5 - weight_average_o) / weight_stdev_o
+            # probability_p5 = norm(weight_average_o, weight_stdev_o).cdf(stock_rating_p5)
+        print("stock_rating_sum_pred1 for {} is {}".format(ticker, stock_rating_sum_pred1))
+        print("stock_rating_cnt_pred1 for {} is {}".format(ticker, stock_rating_cnt_pred1))
+        print("stock_rating_sum_pred2 for {} is {}".format(ticker, stock_rating_sum_pred2))
+        print("stock_rating_cnt_pred2 for {} is {}".format(ticker, stock_rating_cnt_pred2))
+        if stock_rating_cnt_pred1 != 0 and stock_rating_cnt_pred2 != 0:
+            stock_rating_pred1 = stock_rating_sum_pred1 / stock_rating_cnt_pred1
+            stock_rating_pred2 = stock_rating_sum_pred2 / stock_rating_cnt_pred2
 
-        std_above_avg_p2 = (stock_rating_p2 - weight_average) / weight_stdev
-        probability_p2 = norm(weight_average, weight_stdev).cdf(stock_rating_p2)
+            # Calculate the number of standard deviations above the mean and find the probability of that for a 'normal' distribution
+            # - Assuming normal because as the word library increases, it should be able to be modeled as normal
+            std_above_avg_pred1 = (stock_rating_pred1 - weight_average) / weight_stdev
+            probability_pred1 = norm(weight_average, weight_stdev).cdf(stock_rating_pred1)
 
-        std_above_avg_p4 = (stock_rating_p1 - weight_average_o) / weight_stdev_o
-        probability_p4 = norm(weight_average_o, weight_stdev_o).cdf(stock_rating_p1)
 
-        std_above_avg_p5 = (stock_rating_p5 - weight_average_o) / weight_stdev_o
-        probability_p5 = norm(weight_average_o, weight_stdev_o).cdf(stock_rating_p5)
+            std_above_avg_pred2 = (stock_rating_pred2 - weight_average_o) / weight_stdev_o
+            probability_pred2 = norm(weight_average_o, weight_stdev_o).cdf(stock_rating_pred2)
 
-        end_all = time.time()
 
-        predict_gpu_kernel_time.append(end - start)
-        predict_gpu_function_time.append(end_all - start_all)
+            end_all = time.time()
 
-        # Update the variables for prediction 1 in slot 0
-        all_std_devs[tickers].append(std_above_avg_p1)
-        all_probabilities[tickers].append(probability_p1)
-        all_raw_ratings[tickers].append(stock_rating_p1)
+            predict_gpu_kernel_time.append(end - start)
+            predict_gpu_function_time.append(end_all - start_all)
 
-        if std_above_avg_p1 > 0.5:
-            all_predictions[tickers].append(1)
-        elif std_above_avg_p1 < -0.5:
-            all_predictions[tickers].append(-1)
+            # Update the variables for prediction1
+            all_std_devs[ticker].append(std_above_avg_pred1)
+            all_probabilities[ticker].append(probability_pred1)
+            all_raw_ratings[ticker].append(stock_rating_pred1)
+
+            if probability_pred1 >= 0.6:
+                all_predictions[ticker].append(1)
+            elif probability_pred1 <= 0.4:
+                all_predictions[ticker].append(-1)
+            else:
+                all_predictions[ticker].append(0)
+
+            # Update the variables for prediction 6 (Which are based off the same stats as prediction 4) in slot 5
+            all_std_devs[ticker].append(std_above_avg_pred2)
+            all_probabilities[ticker].append(probability_pred2)
+            all_raw_ratings[ticker].append(stock_rating_pred2)
+
+            if probability_pred2 >= 0.6:
+                all_predictions[ticker].append(1)
+            elif probability_pred2 <= 0.4:
+                all_predictions[ticker].append(-1)
+            else:
+                all_predictions[ticker].append(0)
         else:
-            all_predictions[tickers].append(0)
-
-        # Update the variables for prediction 2 in slot 1
-        all_std_devs[tickers].append(std_above_avg_p2)
-        all_probabilities[tickers].append(probability_p2)
-        all_raw_ratings[tickers].append(stock_rating_p2)
-
-        if std_above_avg_p2 > 0.5:
-            all_predictions[tickers].append(1)
-        elif std_above_avg_p2 < -0.5:
-            all_predictions[tickers].append(-1)
-        else:
-            all_predictions[tickers].append(0)
-
-        # Update the variables for prediction 3 (Which are based off the same stats as prediction 1) in slot 2
-        all_std_devs[tickers].append(std_above_avg_p1)
-        all_probabilities[tickers].append(probability_p1)
-        all_raw_ratings[tickers].append(stock_rating_p1)
-
-        if stock_rating_p1 > weight_average:
-            all_predictions[tickers].append(1)
-        elif stock_rating_p1 < weight_average:
-            all_predictions[tickers].append(-1)
-        else:
-            all_predictions[tickers].append(0)
-
-        # Update the variables for prediction 4 (uses p1's weighting with different weight analysis) in slot 3
-        all_std_devs[tickers].append(std_above_avg_p4)
-        all_probabilities[tickers].append(probability_p4)
-        all_raw_ratings[tickers].append(stock_rating_p1)
-
-        if std_above_avg_p4 > 0.5:
-            all_predictions[tickers].append(1)
-        elif std_above_avg_p4 < -0.5:
-            all_predictions[tickers].append(-1)
-        else:
-            all_predictions[tickers].append(0)
-
-        # Update the variables for prediction 5 in slot 4
-        all_std_devs[tickers].append(std_above_avg_p5)
-        all_probabilities[tickers].append(probability_p5)
-        all_raw_ratings[tickers].append(stock_rating_p5)
-
-        if std_above_avg_p5 > 0.5:
-            all_predictions[tickers].append(1)
-        elif std_above_avg_p5 < -0.5:
-            all_predictions[tickers].append(-1)
-        else:
-            all_predictions[tickers].append(0)
-
-        # Update the variables for prediction 6 (Which are based off the same stats as prediction 4) in slot 5
-        all_std_devs[tickers].append(std_above_avg_p4)
-        all_probabilities[tickers].append(probability_p4)
-        all_raw_ratings[tickers].append(stock_rating_p1)
-
-        if stock_rating_p1 > weight_average_o:
-            all_predictions[tickers].append(1)
-        elif stock_rating_p1 < weight_average_o:
-            all_predictions[tickers].append(-1)
-        else:
-            all_predictions[tickers].append(0)
-
-    write_predictions_to_file_and_print(day, all_predictions, all_std_devs, all_probabilities, all_raw_ratings)
+            for i in range(2):
+                all_predictions[ticker].append(0)
+                all_std_devs[ticker].append("None")
+                all_probabilities[ticker].append("None")
+                all_raw_ratings[ticker].append("None")
+    print(all_predictions)
+    print(all_probabilities)
+    write_predictions_to_file_and_print(day, time_num, all_predictions, all_std_devs, all_probabilities, all_raw_ratings)
 
 
 def predict_movement7_gpu(day):
@@ -2206,7 +2188,7 @@ Verifies that a date is valid and in the right format
 def verify_date(date):
     today = datetime.date.today()
     date_parts = date.split('-')
-
+    print("test_date is {}".format(date))
     if len(date_parts) < 3:
         return False
 
@@ -2214,7 +2196,6 @@ def verify_date(date):
         test_date = datetime.date(int(date_parts[2]), int(date_parts[0]), int(date_parts[1]))
     except:
         return False
-    # print("test_date is {}".format(test_date))
     if test_date > today:
         return False
 
@@ -2252,7 +2233,7 @@ Looks over Predictions and determines accuracy
 
 
 def determine_accuracy():
-    prediction_results = [[], [], [], [], [], [], []]
+    prediction_results = [[], []]
 
     # Loop over all prediction files
     for filename in os.listdir('./output/'):
@@ -2273,10 +2254,7 @@ def determine_accuracy():
         # Get the prediction method type
         # 1-6 use the very basic weighting algorithim, 7 uses Naive Bayes
         try:
-            if (filename[10] == '-'):
-                prediction_type = 1
-            else:
-                prediction_type = int(filename[10])
+            prediction_type = int(filename[10])
         except:
             continue
 
@@ -2287,16 +2265,19 @@ def determine_accuracy():
         except:
             continue
 
+        count = 0
         # Iterate through the file
         for lines in file:
 
             # Find a prediction
             if lines[:len('Prediction for:')] == 'Prediction for:' and found == False:
+                time_num = count // 8
                 # Record the stock
                 current_stock = lines[len('Prediction for:') + 1:-2]
 
                 # Set found to true to look for the rating
                 found = True
+                count += 1
 
             # Find a rating
             if lines[:len('- Corresponds to:')] == '- Corresponds to:' and found == True:
@@ -2305,8 +2286,10 @@ def determine_accuracy():
                 rating = lines[len('- Corresponds to:') + 1:-1]
 
                 # Get the chane in the stock price for that day
-                change = stock_prices[current_stock][prediction_date][1] - stock_prices[current_stock][prediction_date][
-                    0]
+                print(current_stock)
+                print(prediction_date)
+                print(time_num)
+                change = stock_prices[current_stock][prediction_date][time_num][1] - stock_prices[current_stock][prediction_date][time_num][0]
 
                 # Check if the prediction was correct
                 if change > 0 and rating == 'buy':
@@ -2330,8 +2313,7 @@ def determine_accuracy():
         # Add the values to the date set and prediction lists
         if num_correct + num_wrong != 0:
             date_parts = prediction_date.split('-')
-            test_date = datetime.date(int(date_parts[2]), int(date_parts[0]), int(date_parts[1]))
-            prediction_results[prediction_type - 1].append([float(num_correct) / (num_wrong + num_correct), test_date])
+            prediction_results[prediction_type - 1].append([float(num_correct) / (num_wrong + num_correct), prediction_date])
 
     # Plot everything
     plt.figure()
@@ -2366,6 +2348,7 @@ def load_articles(day, time_num):
 
         # Try to open the file for that stock from the given directory
         logging.debug('Starting to load articles for: ' + ticker)
+        print(('Starting to load articles for: ' + ticker))
         try:
             file = open('./data/data_{}.csv'.format(ticker), 'r')
         except IOError as error:
@@ -2391,10 +2374,10 @@ def load_articles(day, time_num):
             if date == day:
                 # print(data[0], "|||| time_num is {} and actual article hour is {}".format(time_num, hour))
                 if time_num == 0:
-                    if localtime == "8:30":
+                    if localtime == "8:30" or localtime == "08:30":
                         stock_data[ticker].append(data[0])
                 elif time_num == 1:
-                    if localtime != "8:30" and hour < need_time[1]:
+                    if localtime != "8:30" and localtime != "08:30" and hour < need_time[1]:
                         stock_data[ticker].append(data[0])
                 else:
                     if hour >= need_time[0] and hour < need_time[1]:
@@ -2550,8 +2533,8 @@ def main():
                     print('Error: Unable to analyze weights')
                     sys.exit(-1)
 
-                predict_movement(specified_day)
-                predict_movement_gpu(specified_day)
+                predict_movement(specified_day, time_num)
+                predict_movement_gpu(specified_day, time_num)
             else:
                 if not analyze_weights():
                     print('Error: Unable to analyze weights')
@@ -2645,7 +2628,7 @@ def main():
 
         # Save data
         logging.info('Saving word weights')
-        # save_all_word_weights(weight_opt)
+        save_all_word_weights(weight_opt)
 
 
 
@@ -2664,8 +2647,66 @@ def main():
 
                         sum_percentage += percentage
                 print('Update Avg Percent Difference: ' + str(sum_percentage * 100 / len(update_outputs_cpu)) + ' %')
-        print(update_outputs_cpu)
-        print(update_outputs_gpu)
+        # print(update_outputs_cpu)
+        # print(update_outputs_gpu)
+
+    print('')
+    if len(analysis_cpu_kernel_time) != 0 and len(analysis_cpu_function_time) != 0 and len(
+            analysis_gpu_kernel_time) != 0 and len(analysis_gpu_function_time) != 0:
+        sum_cpu_function = 0
+        sum_cpu_kernel = 0
+        for times in analysis_cpu_function_time:
+            sum_cpu_function += times
+        for times in analysis_cpu_kernel_time:
+            sum_cpu_kernel += times
+
+        sum_gpu_function = 0
+        sum_gpu_kernel = 0
+        for times in analysis_gpu_function_time:
+            sum_gpu_function += times
+        for times in analysis_gpu_kernel_time:
+            sum_gpu_kernel += times
+
+        print('Analysis Speedup: Kernel = ' + str(sum_cpu_kernel / sum_gpu_kernel) + ', Function = ' + str(
+            sum_cpu_function / sum_gpu_function))
+
+    if len(predict_cpu_kernel_time) != 0 and len(predict_cpu_function_time) != 0 and len(
+            predict_gpu_kernel_time) != 0 and len(predict_gpu_function_time) != 0:
+        sum_cpu_function = 0
+        sum_cpu_kernel = 0
+        for times in predict_cpu_function_time:
+            sum_cpu_function += times
+        for times in predict_cpu_kernel_time:
+            sum_cpu_kernel += times
+
+        sum_gpu_function = 0
+        sum_gpu_kernel = 0
+        for times in predict_gpu_function_time:
+            sum_gpu_function += times
+        for times in predict_gpu_kernel_time:
+            sum_gpu_kernel += times
+
+        print('Prediction Speedup: Kernel = ' + str(sum_cpu_kernel / sum_gpu_kernel) + ', Function = ' + str(
+            sum_cpu_function / sum_gpu_function))
+
+    if len(update_cpu_kernel_time) != 0 and len(update_cpu_function_time) != 0 and len(
+            update_gpu_kernel_time) != 0 and len(update_gpu_function_time) != 0:
+        sum_cpu_function = 0
+        sum_cpu_kernel = 0
+        for times in update_cpu_function_time:
+            sum_cpu_function += times
+        for times in update_cpu_kernel_time:
+            sum_cpu_kernel += times
+
+        sum_gpu_function = 0
+        sum_gpu_kernel = 0
+        for times in update_gpu_function_time:
+            sum_gpu_function += times
+        for times in update_gpu_kernel_time:
+            sum_gpu_kernel += times
+
+        print('Update Speedup: Kernel = ' + str(sum_cpu_kernel / sum_gpu_kernel) + ', Function = ' + str(
+            sum_cpu_function / sum_gpu_function))
 
     print('')
     print('Done')

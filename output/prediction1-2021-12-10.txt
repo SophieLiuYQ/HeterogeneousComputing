@@ -5,10 +5,10 @@ Buy if above mean, sell if below mean.
 Weighting stats based on unique words. 
 
 Predictions Based On Weighting Stats: 
-- Avg: 1.0756349854626055
-- Std: 0.9019139347627367
-- Sum: 713.1459953617074
-- Cnt: 663
+- Avg: 1.0639987263195743
+- Std: 0.894042278233608
+- Sum: 747.9911046026607
+- Cnt: 703
 - Max: 2.0
 - Min: 0.0
 
@@ -67,10 +67,10 @@ Buy if above mean, sell if below mean.
 Weighting stats based on unique words. 
 
 Predictions Based On Weighting Stats: 
-- Avg: 1.0756349854626055
-- Std: 0.9019139347627367
-- Sum: 713.1459953617074
-- Cnt: 663
+- Avg: 1.0639987263195743
+- Std: 0.894042278233608
+- Sum: 747.9911046026607
+- Cnt: 703
 - Max: 2.0
 - Min: 0.0
 
@@ -129,54 +129,54 @@ Buy if above mean, sell if below mean.
 Weighting stats based on unique words. 
 
 Predictions Based On Weighting Stats: 
-- Avg: 1.0756349854626055
-- Std: 0.9019139347627367
-- Sum: 713.1459953617074
-- Cnt: 663
+- Avg: 1.0639987263195743
+- Std: 0.894042278233608
+- Sum: 747.9911046026607
+- Cnt: 703
 - Max: 2.0
 - Min: 0.0
 
 Prediction for: FB 
-- Std above mean: 0.7793830621200777
-- Raw val rating: 1.7785714297067552
-- Buy prob is: 0.7821229508113624
+- Std above mean: 0.845051605631467
+- Raw val rating: 1.8195105890432994
+- Buy prob is: 0.800958986668231
 - Corresponds to: buy
 
 Prediction for: MSFT 
-- Std above mean: 0.16763285969365205
-- Raw val rating: 1.226825397544437
-- Buy prob is: 0.5665639406563645
-- Corresponds to: buy
+- Std above mean: 0.14931228627664792
+- Raw val rating: 1.1974902229106172
+- Buy prob is: 0.5593463895490234
+- Corresponds to: undecided
 
 Prediction for: AAPL 
-- Std above mean: 0.5224889005061191
-- Raw val rating: 1.5468750055879354
-- Buy prob is: 0.6993350137088756
+- Std above mean: 0.4937672275980714
+- Raw val rating: 1.5054475033984465
+- Buy prob is: 0.6892647096974522
 - Corresponds to: buy
 
 Prediction for: NVDA 
-- Std above mean: None
-- Raw val rating: None
-- Buy prob is: None
+- Std above mean: 0.2005190423417869
+- Raw val rating: 1.2432712277640467
+- Buy prob is: 0.5794626666110907
 - Corresponds to: undecided
 
 Prediction for: AMD 
-- Std above mean: -0.07073055966570847
-- Raw val rating: 1.0118421080865359
-- Buy prob is: 0.47180609932154277
-- Corresponds to: sell
+- Std above mean: -0.06242611494921405
+- Raw val rating: 1.0081871402891058
+- Buy prob is: 0.47511174939542283
+- Corresponds to: undecided
 
 Prediction for: XLNX 
-- Std above mean: -0.25809318686008575
-- Raw val rating: 0.8428571437661713
-- Buy prob is: 0.39816749480038893
+- Std above mean: -0.3013367082382392
+- Raw val rating: 0.7945909691708428
+- Buy prob is: 0.38157887593319606
 - Corresponds to: sell
 
 Prediction for: QCOM 
-- Std above mean: 0.3752326042355953
-- Raw val rating: 1.4140625
-- Buy prob is: 0.6462562579695804
-- Corresponds to: buy
+- Std above mean: 0.2308298509379172
+- Raw val rating: 1.270370372136434
+- Buy prob is: 0.5912765051483553
+- Corresponds to: undecided
 
 Prediction for: MU 
 - Std above mean: None
@@ -191,42 +191,42 @@ Buy if above mean, sell if below mean.
 Weighting stats based on unique words. 
 
 Predictions Based On Weighting Stats: 
-- Avg: 1.0756349854626055
-- Std: 0.9019139347627367
-- Sum: 713.1459953617074
-- Cnt: 663
+- Avg: 0.8682592995560694
+- Std: 0.8728989699496149
+- Sum: 791.8524811951353
+- Cnt: 912
 - Max: 2.0
 - Min: 0.0
 
 Prediction for: FB 
-- Std above mean: -0.08386053540962589
-- Raw val rating: 1.0
-- Buy prob is: 0.4665836585850615
+- Std above mean: -0.9946847567092291
+- Raw val rating: 0.0
+- Buy prob is: 0.1599448052410264
 - Corresponds to: sell
 
 Prediction for: MSFT 
-- Std above mean: 0.35469096954995943
-- Raw val rating: 1.3955357134342194
-- Buy prob is: 0.6385894415431537
-- Corresponds to: buy
+- Std above mean: 0.050275466073420635
+- Raw val rating: 0.9121447021052951
+- Buy prob is: 0.5200485628616183
+- Corresponds to: undecided
 
 Prediction for: AAPL 
-- Std above mean: None
-- Raw val rating: None
-- Buy prob is: None
-- Corresponds to: undecided
+- Std above mean: -0.8771865009937558
+- Raw val rating: 0.10256410638491313
+- Buy prob is: 0.19019267346742014
+- Corresponds to: sell
 
 Prediction for: NVDA 
-- Std above mean: None
-- Raw val rating: None
-- Buy prob is: None
-- Corresponds to: undecided
+- Std above mean: -0.47919430526580187
+- Raw val rating: 0.44997108408382963
+- Buy prob is: 0.3159002025684511
+- Corresponds to: sell
 
 Prediction for: AMD 
-- Std above mean: 1.0248927075071348
-- Raw val rating: 2.0
-- Buy prob is: 0.8472930920394681
-- Corresponds to: buy
+- Std above mean: -0.9946847567092291
+- Raw val rating: 0.0
+- Buy prob is: 0.1599448052410264
+- Corresponds to: sell
 
 Prediction for: XLNX 
 - Std above mean: None
