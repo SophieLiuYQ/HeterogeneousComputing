@@ -4,7 +4,7 @@ Dec 8 - Sophie's task: run and test the CPU listener, pushed to remote server, a
 Dec 9 - Sophie's task: no task scheduled for the day. Doing other HWs.
 Dec 10 - Sophie's task: look into the algorithm and try to run with our data. 
 Dec 13 - Sophie's tasks: check load_stock_price and load_article and see whether can run it
-Dec 14 -Sophie's tasks: attemped to rewrite and clean up the code but failed. Instead, set up a gcloud auto runner to predict and update weights from Dec15 to Dec17. 
+Dec 14 -Sophie's tasks: attemped to rewrite and clean up the code but failed. Instead, set up a gcloud auto runner to predict and update weights from Dec15 to Dec17. Dec 15 - Sophie's task: gcloud does not wake up by itself despite the gcloud scheduler. Instead, manually woke the gcloud. cron job worked fine and updated results to git.
 
 Dec  8~9 - Xiao's task: search statistic prediction algorithm; reduce the algorithm to three; modify load_stock_price according to the csv data format.
 Dec 10 - Xiao's task: modify (use_for_test.py) the way to load word weights according to our project.
