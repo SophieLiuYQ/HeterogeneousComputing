@@ -6,7 +6,7 @@
 ####################################################################################################
 
 # Specifies GPU/CPU calculations will be prepformed
-GPU = True
+GPU = False
 
 if GPU:
     import pyopencl as cl
@@ -33,14 +33,7 @@ from dateutil.parser import parse
 # Global Constants
 
 ## THIS WAS ORIGINALLY 8 STOCK TICKERS
-STOCK_TAGS = ['FB',
-              'MSFT',
-              'AAPL',
-              'NVDA',
-              'AMD',
-              'XLNX',
-              'QCOM',
-              'MU']
+STOCK_TAGS = ['AAPL',]
 
 # STOCK_TAGS = ['NVDA']
 
@@ -115,7 +108,7 @@ if not os.path.exists('./output/'):
 
 # Get the correct opencl platform (taken from instructor sample code)
 if GPU:
-    NAME = 'NVIDIA CUDA'
+    NAME = 'Apple'
     platforms = cl.get_platforms()
     devs = None
     for platform in platforms:
@@ -2131,202 +2124,7 @@ def write_predictions_to_file_and_print(day, time_num, all_predictions, all_std_
             file.write('- Min: ' + str(weight_min) + '\n\n')
 
         # For each prediction, iterate through the stocks
-        for ticker in ["FB"]:
-
-            # print("index is {}".format(index))
-            if all_predictions[ticker][index] == 1:
-                rating = "buy"
-            elif all_predictions[ticker][index] == -1:
-                rating = "sell"
-            else:
-                if all_predictions["MSFT"][index] == 1:
-                    rating = "buy"
-                elif all_predictions["MSFT"][index] == -1:
-                    rating = "sell"
-                else:
-                    rating = "undecided"
-
-            # For each stock, print and write the rating
-            print('RATING FOR: ', ticker)
-            print('\t- STD ABOVE MEAN: ', all_std_devs[ticker][index])
-            print('\t- RAW VAL RATING: ', all_raw_ratings[ticker][index])
-            print('\t- PROBABILITY IS: ', all_probabilities[ticker][index])
-            print('\t- CORRESPONDS TO: ', rating)
-
-            file.write('Prediction for: ' + ticker + ' \n')
-            file.write('- Std above mean: ' + str(all_std_devs[ticker][index]) + '\n')
-            file.write('- Raw val rating: ' + str(all_raw_ratings[ticker][index]) + '\n')
-            file.write('- Buy prob is: ' + str(all_probabilities[ticker][index]) + '\n')
-            file.write('- Corresponds to: ' + str(rating) + '\n\n')
-
-        for ticker in ["MSFT"]:
-            # print("index is {}".format(index))
-            if all_predictions[ticker][index] == 1:
-                rating = "buy"
-            elif all_predictions[ticker][index] == -1:
-                rating = "sell"
-            else:
-                if all_predictions["FB"][index] == 1:
-                    rating = "buy"
-                elif all_predictions["FB"][index] == -1:
-                    rating = "sell"
-                else:
-                    rating = "undecided"
-
-            # For each stock, print and write the rating
-            print('RATING FOR: ', ticker)
-            print('\t- STD ABOVE MEAN: ', all_std_devs[ticker][index])
-            print('\t- RAW VAL RATING: ', all_raw_ratings[ticker][index])
-            print('\t- PROBABILITY IS: ', all_probabilities[ticker][index])
-            print('\t- CORRESPONDS TO: ', rating)
-
-            file.write('Prediction for: ' + ticker + ' \n')
-            file.write('- Std above mean: ' + str(all_std_devs[ticker][index]) + '\n')
-            file.write('- Raw val rating: ' + str(all_raw_ratings[ticker][index]) + '\n')
-            file.write('- Buy prob is: ' + str(all_probabilities[ticker][index]) + '\n')
-            file.write('- Corresponds to: ' + str(rating) + '\n\n')
-
-        for ticker in ["AAPL"]:
-
-            # print("index is {}".format(index))
-            if all_predictions[ticker][index] == 1:
-                rating = "buy"
-            elif all_predictions[ticker][index] == -1:
-                rating = "sell"
-            else:
-                if all_predictions["QCOM"][index] == 1:
-                    rating = "buy"
-                elif all_predictions["QCOM"][index] == -1:
-                    rating = "sell"
-                else:
-                    rating = "undecided"
-
-            # For each stock, print and write the rating
-            print('RATING FOR: ', ticker)
-            print('\t- STD ABOVE MEAN: ', all_std_devs[ticker][index])
-            print('\t- RAW VAL RATING: ', all_raw_ratings[ticker][index])
-            print('\t- PROBABILITY IS: ', all_probabilities[ticker][index])
-            print('\t- CORRESPONDS TO: ', rating)
-
-            file.write('Prediction for: ' + ticker + ' \n')
-            file.write('- Std above mean: ' + str(all_std_devs[ticker][index]) + '\n')
-            file.write('- Raw val rating: ' + str(all_raw_ratings[ticker][index]) + '\n')
-            file.write('- Buy prob is: ' + str(all_probabilities[ticker][index]) + '\n')
-            file.write('- Corresponds to: ' + str(rating) + '\n\n')
-
-        for ticker in ["QCOM"]:
-
-            # print("index is {}".format(index))
-            if all_predictions[ticker][index] == 1:
-                rating = "buy"
-            elif all_predictions[ticker][index] == -1:
-                rating = "sell"
-            else:
-                if all_predictions["AAPL"][index] == 1:
-                    rating = "buy"
-                elif all_predictions["AAPL"][index] == -1:
-                    rating = "sell"
-                else:
-                    rating = "undecided"
-
-            # For each stock, print and write the rating
-            print('RATING FOR: ', ticker)
-            print('\t- STD ABOVE MEAN: ', all_std_devs[ticker][index])
-            print('\t- RAW VAL RATING: ', all_raw_ratings[ticker][index])
-            print('\t- PROBABILITY IS: ', all_probabilities[ticker][index])
-            print('\t- CORRESPONDS TO: ', rating)
-
-            file.write('Prediction for: ' + ticker + ' \n')
-            file.write('- Std above mean: ' + str(all_std_devs[ticker][index]) + '\n')
-            file.write('- Raw val rating: ' + str(all_raw_ratings[ticker][index]) + '\n')
-            file.write('- Buy prob is: ' + str(all_probabilities[ticker][index]) + '\n')
-            file.write('- Corresponds to: ' + str(rating) + '\n\n')
-
-        for ticker in ["NVDA"]:
-
-            # print("index is {}".format(index))
-            if all_predictions[ticker][index] == 1:
-                rating = "buy"
-            elif all_predictions[ticker][index] == -1:
-                rating = "sell"
-            else:
-                if all_predictions["AMD"][index] == 1:
-                    rating = "buy"
-                elif all_predictions["AMD"][index] == -1:
-                    rating = "sell"
-                else:
-                    rating = "undecided"
-
-            # For each stock, print and write the rating
-            print('RATING FOR: ', ticker)
-            print('\t- STD ABOVE MEAN: ', all_std_devs[ticker][index])
-            print('\t- RAW VAL RATING: ', all_raw_ratings[ticker][index])
-            print('\t- PROBABILITY IS: ', all_probabilities[ticker][index])
-            print('\t- CORRESPONDS TO: ', rating)
-
-            file.write('Prediction for: ' + ticker + ' \n')
-            file.write('- Std above mean: ' + str(all_std_devs[ticker][index]) + '\n')
-            file.write('- Raw val rating: ' + str(all_raw_ratings[ticker][index]) + '\n')
-            file.write('- Buy prob is: ' + str(all_probabilities[ticker][index]) + '\n')
-            file.write('- Corresponds to: ' + str(rating) + '\n\n')
-
-        for ticker in ["AMD"]:
-
-            # print("index is {}".format(index))
-            if all_predictions[ticker][index] == 1:
-                rating = "buy"
-            elif all_predictions[ticker][index] == -1:
-                rating = "sell"
-            else:
-                if all_predictions["NVDA"][index] == 1:
-                    rating = "buy"
-                elif all_predictions["NVDA"][index] == -1:
-                    rating = "sell"
-                else:
-                    rating = "undecided"
-
-            # For each stock, print and write the rating
-            print('RATING FOR: ', ticker)
-            print('\t- STD ABOVE MEAN: ', all_std_devs[ticker][index])
-            print('\t- RAW VAL RATING: ', all_raw_ratings[ticker][index])
-            print('\t- PROBABILITY IS: ', all_probabilities[ticker][index])
-            print('\t- CORRESPONDS TO: ', rating)
-
-            file.write('Prediction for: ' + ticker + ' \n')
-            file.write('- Std above mean: ' + str(all_std_devs[ticker][index]) + '\n')
-            file.write('- Raw val rating: ' + str(all_raw_ratings[ticker][index]) + '\n')
-            file.write('- Buy prob is: ' + str(all_probabilities[ticker][index]) + '\n')
-            file.write('- Corresponds to: ' + str(rating) + '\n\n')
-
-        for ticker in ["XLNX"]:
-
-            # print("index is {}".format(index))
-            if all_predictions[ticker][index] == 1:
-                rating = "buy"
-            elif all_predictions[ticker][index] == -1:
-                rating = "sell"
-            else:
-                if all_predictions["AMD"][index] == 1:
-                    rating = "buy"
-                elif all_predictions["AMD"][index] == -1:
-                    rating = "sell"
-                else:
-                    rating = "undecided"
-
-            # For each stock, print and write the rating
-            print('RATING FOR: ', ticker)
-            print('\t- STD ABOVE MEAN: ', all_std_devs[ticker][index])
-            print('\t- RAW VAL RATING: ', all_raw_ratings[ticker][index])
-            print('\t- PROBABILITY IS: ', all_probabilities[ticker][index])
-            print('\t- CORRESPONDS TO: ', rating)
-
-            file.write('Prediction for: ' + ticker + ' \n')
-            file.write('- Std above mean: ' + str(all_std_devs[ticker][index]) + '\n')
-            file.write('- Raw val rating: ' + str(all_raw_ratings[ticker][index]) + '\n')
-            file.write('- Buy prob is: ' + str(all_probabilities[ticker][index]) + '\n')
-            file.write('- Corresponds to: ' + str(rating) + '\n\n')
-
-        for ticker in ["MU"]:
+        for ticker in STOCK_TAGS:
 
             # print("index is {}".format(index))
             if all_predictions[ticker][index] == 1:
@@ -2335,7 +2133,6 @@ def write_predictions_to_file_and_print(day, time_num, all_predictions, all_std_
                 rating = "sell"
             else:
                 rating = "undecided"
-
 
             # For each stock, print and write the rating
             print('RATING FOR: ', ticker)
@@ -2553,22 +2350,21 @@ def load_articles(day, time_num):
         logging.debug('Starting to load articles for: ' + ticker)
         print(('Starting to load articles for: ' + ticker))
         try:
-            file = open('./data/data_{}.csv'.format(ticker), 'r')
+            csvfile = open('./data/data_{}.csv'.format(ticker), 'r')
         except IOError as error:
             logging.warning('Could not load articles for: ' + ticker + ', Error: ' + str(error))
             continue
-
-        # skip the first line as it is the header
-        file.readline()
+        # open the file as a csv
+        reader = csv.reader(csvfile)
+        reader_iter = iter(reader)
+        next(reader_iter)  # skip the header
         # Prepare variables to save the article data
         stock_data[ticker] = []
         need_time = (time_num*2 + 6, time_num*2 + 8)
-        for line in file:
-            data = line.strip().rsplit(",", 1)
-            # data[0] is the news header and data[1] is the datetime
-            date_time = data[1]
+        for row in reader_iter:
+            [title, date_time, *_] = row
             date_time = date_time.split()
-            if len(date_time) == 0:
+            if len(date_time) < 2:
                 continue
             date = (str(parse(date_time[0])).split())[0]
             localtime = "00:00" if (len(date_time) == 1) else date_time[1]
@@ -2578,13 +2374,13 @@ def load_articles(day, time_num):
                 # print(data[0], "|||| time_num is {} and actual article hour is {}".format(time_num, hour))
                 if time_num == 0:
                     if localtime == "8:30" or localtime == "08:30":
-                        stock_data[ticker].append(data[0])
+                        stock_data[ticker].append(title)
                 elif time_num == 1:
                     if localtime != "8:30" and localtime != "08:30" and hour < need_time[1]:
-                        stock_data[ticker].append(data[0])
+                        stock_data[ticker].append(title)
                 else:
                     if hour >= need_time[0] and hour < need_time[1]:
-                        stock_data[ticker].append(data[0])
+                        stock_data[ticker].append(title)
                 # print("*"*30)
         # print(stock_data[ticker])
                 # if time_num != 3:
