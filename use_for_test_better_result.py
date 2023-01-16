@@ -11,23 +11,26 @@ GPU = False
 if GPU:
     import pyopencl as cl
 
-from bs4 import BeautifulSoup as BS
-import requests
-import os
-import datetime
-import time
-import logging
-import sys, getopt
-import numpy as np
-import struct
-import binascii
-import math
-from scipy.stats import norm
-from matplotlib import pyplot as plt
-from matplotlib import dates as plt_dates
-import re
+# from bs4 import BeautifulSoup as BS
+# import requests
+# import binascii
+# from matplotlib import dates as plt_dates
+
 import csv
+import datetime
+import getopt
+import logging
+import math
+import numpy as np
+import os
+import re
+import struct
+import sys
+import time
+
 from dateutil.parser import parse
+from matplotlib import pyplot as plt
+from scipy.stats import norm
 
 ########### Global Variables and Configurations ###########
 # Global Constants
