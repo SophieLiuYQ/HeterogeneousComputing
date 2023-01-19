@@ -28,15 +28,21 @@ import struct
 import sys
 import time
 
+import data_processing
+
 from dateutil.parser import parse
 from matplotlib import pyplot as plt
 from scipy.stats import norm
+from zoneinfo import ZoneInfo
+
+logging.basicConfig(level = logging.INFO)
 
 ########### Global Variables and Configurations ###########
 # Global Constants
 
 ## THIS WAS ORIGINALLY 8 STOCK TICKERS
-STOCK_TAGS = ['AAPL',]
+STOCK_TAGS = data_processing.read_portfolio()
+TIMEZONE = ZoneInfo('US/Central')
 
 # STOCK_TAGS = ['NVDA']
 
@@ -2345,61 +2351,37 @@ def determine_accuracy():
 
 
 def load_articles(day, time_num):
-    # directory is './data/data_{}'
-    for ticker in STOCK_TAGS:
-        # start = time.time()
+    news = data_processing.load_news_files(STOCK_TAGS)
 
-        # Try to open the file for that stock from the given directory
-        logging.debug('Starting to load articles for: ' + ticker)
-        print(('Starting to load articles for: ' + ticker))
-        try:
-            csvfile = open('./data/data_{}.csv'.format(ticker), 'r')
-        except IOError as error:
-            logging.warning('Could not load articles for: ' + ticker + ', Error: ' + str(error))
-            continue
-        # open the file as a csv
-        reader = csv.reader(csvfile)
-        reader_iter = iter(reader)
-        next(reader_iter)  # skip the header
-        # Prepare variables to save the article data
+    def as_datetime(day, hour):
+        dt = datetime.datetime.strptime(
+            f'{day} {hour}:00', '%Y-%m-%d %H:%M').replace(tzinfo=TIMEZONE)
+        return dt
+
+    if time_num == 0: 
+        # at market open, include everything from yesterday after 14:00
+        start_time = as_datetime(day, 14) - datetime.timedelta(days=1)
+    else:
+        start_time = as_datetime(day, time_num * 2 + 6)
+
+    end_time = as_datetime(day, time_num * 2 + 8)
+
+    logging.info('using articles from {%s}-{%s}', start_time, end_time)
+
+    for ticker, articles in news.items():
         stock_data[ticker] = []
-        need_time = (time_num*2 + 6, time_num*2 + 8)
-        for row in reader_iter:
-            [title, date_time, *_] = row
-            date_time = date_time.split()
-            if len(date_time) < 2:
-                continue
-            date = (str(parse(date_time[0])).split())[0]
-            localtime = "00:00" if (len(date_time) == 1) else date_time[1]
-            hour = int(localtime.split(":")[0])
-            # print(hour)
-            if date == day:
-                # print(data[0], "|||| time_num is {} and actual article hour is {}".format(time_num, hour))
-                if time_num == 0:
-                    if localtime == "8:30" or localtime == "08:30":
-                        stock_data[ticker].append(title)
-                elif time_num == 1:
-                    if localtime != "8:30" and localtime != "08:30" and hour < need_time[1]:
-                        stock_data[ticker].append(title)
-                else:
-                    if hour >= need_time[0] and hour < need_time[1]:
-                        stock_data[ticker].append(title)
-                # print("*"*30)
-        # print(stock_data[ticker])
-                # if time_num != 3:
-                #     if hour >= need_time[0] and hour < need_time[1]:
-                #         stock_data[ticker].append(data[0])
-                # else:
-                #     # if we load articles for 14-16,we actually load all the aricles after 14 pm
-                #     # , because the data is used for tomorrow morning
-                #     if hour >= need_time[0]:
-                #         stock_data[ticker].append(data[0])
-        # print(current_article)
-        # if len(stock_data[ticker]) < SUCCESS_THREASHOLD:
-        #     logging.error('Could not load the threshold (' + str(
-        #         SUCCESS_THREASHOLD) + ') number of articles. Either not saved or another error occured.')
-        #     return False
+
+        for row in articles.itertuples():
+            date_time, title = row
+            date_time = date_time.to_pydatetime()
+
+            if date_time >= start_time and date_time <= end_time:
+                stock_data[ticker].append(title)
+            elif date_time < start_time:
+                break  # terminate search early (ordered data)
+
     print(stock_data)
+
     return True
 
 
