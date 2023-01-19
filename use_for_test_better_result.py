@@ -2540,8 +2540,8 @@ def main():
 
         logging.info('Pulling articles for: ' + today_str)
 
-        # Call the proper functions
-        # pull_recent_articles()
+        api_keys = data_processing.read_api_keys()
+        data_processing.refresh_news_files(STOCK_TAGS, api_keys)
 
         logging.info('Pulling articles complete')
 
