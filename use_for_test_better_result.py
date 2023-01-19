@@ -2353,14 +2353,14 @@ def determine_accuracy():
 def load_articles(day, time_num):
     news = data_processing.load_news_files(STOCK_TAGS)
 
-    def as_datetime(day, hour):
+    def as_datetime(day, hour, minute='00'):
         dt = datetime.datetime.strptime(
-            f'{day} {hour}:00', '%Y-%m-%d %H:%M').replace(tzinfo=TIMEZONE)
+            f'{day} {hour}:{minute}', '%Y-%m-%d %H:%M').replace(tzinfo=TIMEZONE)
         return dt
 
     if time_num == 0: 
-        # at market open, include everything from yesterday after 14:00
-        start_time = as_datetime(day, 14) - datetime.timedelta(days=1)
+        # at market open, include everything from yesterday after 15:30 CT
+        start_time = as_datetime(day, 15, 30) - datetime.timedelta(days=1)
     else:
         start_time = as_datetime(day, time_num * 2 + 6)
 
