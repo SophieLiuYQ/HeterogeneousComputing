@@ -1,7 +1,11 @@
 import csv
-import microquant
 import os
 import pandas as pd
+
+try:
+    import microquant
+except ImportError:
+    microquant = None
 
 _DEFAULT_API_KEY_FILE = "keystore.csv"
 _DEFAULT_EXPORT_DIR = "data/"
