@@ -37,7 +37,8 @@ def read_portfolio(
 ):
     filepath = os.path.join(export_dir, portfolio_file)
     with open(filepath, "r") as f:
-        return [ticker.strip() for ticker in sorted(f) if ticker]
+        tickers = [ticker.strip() for ticker in sorted(f)]
+        return filter(bool, tickers)  # only take non-empty tickers
 
 
 def refresh_news_files(tickers, api_keys, export_dir=_DEFAULT_EXPORT_DIR):
