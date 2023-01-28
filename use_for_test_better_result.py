@@ -2550,8 +2550,8 @@ def main():
 
         logging.info('Pulling stock prices for: ' + today_str)
 
-        # Call the proper functions
-        # update_today_stock_prices()
+        api_keys = data_processing.read_api_keys()
+        data_processing.refresh_price_files(STOCK_TAGS, api_keys)
 
         logging.info('Pulling stock prices complete')
 
