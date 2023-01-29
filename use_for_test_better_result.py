@@ -2380,7 +2380,7 @@ def load_articles(day, time_num):
             elif date_time < start_time:
                 break  # terminate search early (ordered data)
 
-    print("stock_data=", stock_prices, sep='\n')
+    print("stock_data=", stock_data, sep='\n')
 
     return True
 
