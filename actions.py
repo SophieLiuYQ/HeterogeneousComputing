@@ -1,10 +1,14 @@
 import datetime
 import math
+import numpy as np
 import re
 import struct
 import zoneinfo
 
+from scipy import stats
 from absl import logging
+
+norm = stats.norm
 
 MAX_WORDS_PER_LETTER = 2500
 TIMEZONE = zoneinfo.ZoneInfo("US/Central")
@@ -423,8 +427,6 @@ def update_all_word_weights(option, day, time_num, weights, stock_data, stock_pr
             logging.warning("- Could not find articles loaded for " + ticker)
             continue
 
-        cpu = 0
-
         # For each stock, iterate through the articles
         for article in articles:
             # Get the text (ignore link)
@@ -583,3 +585,247 @@ def save_all_word_weights(option, weights):
             )
 
     file.close()
+
+
+def get_word_weight(word_upper, words_by_letter, num_words_by_letter):
+    # Make the word lowercase and get the length of the word
+    word = word_upper.lower()
+
+    # Find the letter index for the words array
+    index = ord(word[:1]) - 97
+    if index < 0 or index > 25:
+        logging.warning("-- Could not find the following word in the database: " + word)
+        return
+
+    # Get the array containing words of the right letter
+    letter_words = words_by_letter[index]
+    num_letter_words = num_words_by_letter[index]
+
+    # Search that array for the current word
+    # found = False
+    for ii in range(0, num_letter_words):
+        # Get the current word data to be compared
+        test_data = struct.unpack_from("16s f i i", letter_words, ii * 28)
+        temp_word = test_data[0].decode("utf_8")
+
+        # Check if the word is the same
+        if temp_word[: len(temp_word.split("\0", 1)[0])] == word:
+            # If it is the same, return its value
+            return np.float32(np.float32(test_data[3]) / test_data[2])
+
+    # Could not find the word
+    return None
+
+
+def predict_movement(analysis, weights, stock_data):
+    logging.info("Predicting stock movements")
+
+    all_predictions = {}
+    all_std_devs = {}
+    all_probabilities = {}
+    all_raw_ratings = {}
+
+    (
+        _,
+        _,
+        _,
+        _,
+        words_by_letter,
+        num_words_by_letter,
+    ) = weights
+
+    (
+        weight_average,
+        weight_stdev,
+        _,
+        _,
+        _,
+        _,
+        weight_average_o,
+        weight_stdev_o,
+        _,
+        _,
+    ) = analysis
+
+    # Iterate through stocks as predictions are seperate for each
+    for ticker, articles in stock_data.items():
+        logging.debug("- Finding prediction for: " + ticker)
+
+        all_predictions[ticker] = []
+        all_std_devs[ticker] = []
+        all_probabilities[ticker] = []
+        all_raw_ratings[ticker] = []
+
+        stock_rating_sum_pred1 = 0
+        stock_rating_cnt_pred1 = 0
+        stock_rating_sum_pred2 = 0
+        stock_rating_cnt_pred2 = 0
+
+        # Iterate through each article for the stock
+        for text in articles:
+            # Get an array of words with two or more characters for the text
+            words_in_text = re.compile("[A-Za-z][A-Za-z][A-Za-z]+").findall(text)
+
+            # Update the word's info
+            for words in words_in_text:
+                weight = get_word_weight(words, words_by_letter, num_words_by_letter)
+
+                # could not find weight so use current average
+                weight = weight_average if weight is None else weight
+
+                # p1 only select weights that are above 0.5 deviation from average_weight
+                if (
+                    weight > weight_stdev + 0.5 * weight_average
+                    or weight < weight_average - 0.5 * weight_stdev
+                ):
+                    stock_rating_sum_pred1 += weight
+                    stock_rating_cnt_pred1 += 1
+
+                # p2 only select weights that are above 0.5 deviation from average_weight
+                if (
+                    weight > weight_stdev_o + 0.5 * weight_average_o
+                    or weight < weight_average_o - 0.5 * weight_stdev_o
+                ):
+                    stock_rating_sum_pred2 += weight
+                    stock_rating_cnt_pred2 += 1
+
+        logging.info(
+            "stock_rating_sum_pred1 for {} is {}".format(ticker, stock_rating_sum_pred1)
+        )
+        logging.info(
+            "stock_rating_cnt_pred1 for {} is {}".format(ticker, stock_rating_cnt_pred1)
+        )
+        logging.info(
+            "stock_rating_sum_pred2 for {} is {}".format(ticker, stock_rating_sum_pred2)
+        )
+        logging.info(
+            "stock_rating_cnt_pred2 for {} is {}".format(ticker, stock_rating_cnt_pred2)
+        )
+
+        # After each word in every article has been examined for that stock, find the average rating
+        if stock_rating_cnt_pred1 != 0 and stock_rating_cnt_pred2 != 0:
+            stock_rating_pred1 = stock_rating_sum_pred1 / stock_rating_cnt_pred1
+            stock_rating_pred2 = stock_rating_sum_pred2 / stock_rating_cnt_pred2
+
+            # Calculate the number of standard deviations above the mean and find the probability of that for a 'normal' distribution
+            # - Assuming normal because as the word library increases, it should be able to be modeled as normal
+            std_above_avg_pred1 = (stock_rating_pred1 - weight_average) / weight_stdev
+            probability_pred1 = norm(weight_average, weight_stdev).cdf(
+                stock_rating_pred1
+            )
+
+            std_above_avg_pred2 = (
+                stock_rating_pred2 - weight_average_o
+            ) / weight_stdev_o
+            probability_pred2 = norm(weight_average_o, weight_stdev_o).cdf(
+                stock_rating_pred2
+            )
+
+            # Update the variables for prediction1
+            all_std_devs[ticker].append(std_above_avg_pred1)
+            all_probabilities[ticker].append(probability_pred1)
+            all_raw_ratings[ticker].append(stock_rating_pred1)
+
+            if probability_pred1 >= 0.6:
+                all_predictions[ticker].append(1)
+            elif probability_pred1 <= 0.4:
+                all_predictions[ticker].append(-1)
+            else:
+                all_predictions[ticker].append(0)
+
+            # Update the variables for prediction 6 (Which are based off the same stats as prediction 4) in slot 5
+            all_std_devs[ticker].append(std_above_avg_pred2)
+            all_probabilities[ticker].append(probability_pred2)
+            all_raw_ratings[ticker].append(stock_rating_pred2)
+
+            if probability_pred2 >= 0.6:
+                all_predictions[ticker].append(1)
+            elif probability_pred1 <= 0.4:
+                all_predictions[ticker].append(-1)
+            else:
+                all_predictions[ticker].append(0)
+        else:
+            for _ in range(2):
+                all_predictions[ticker].append(0)
+                all_std_devs[ticker].append("None")
+                all_probabilities[ticker].append("None")
+                all_raw_ratings[ticker].append("None")
+
+    return (all_predictions, all_std_devs, all_probabilities, all_raw_ratings)
+
+
+def write_predictions_to_file_and_print(analysis, predictions, index):
+    (
+        weight_average,
+        weight_stdev,
+        weight_sum,
+        weight_count,
+        weight_max,
+        weight_min,
+        _,
+        _,
+        _,
+        _,
+    ) = analysis
+
+    # Iterate through the predictions, print them, and write them to files
+    for day, time_nums in predictions.items():
+        # Open file to store todays predictions in
+        file = open(f"./output/prediction{index + 1}-{day}.txt", "a")
+
+        file.write("Prediction Method " + str(index + 1) + ": \n")
+        file.write(
+            "Not Using weights within 0.5 standard deviation of the mean in prediciton.\n"
+        )
+        file.write("Buy if above mean, sell if below mean.\n")
+        file.write("Weighting stats based on unique words. \n\n")
+        file.write("Predictions Based On Weighting Stats: \n")
+        file.write("- Avg: " + str(weight_average) + "\n")
+        file.write("- Std: " + str(weight_stdev) + "\n")
+        file.write("- Sum: " + str(weight_sum) + "\n")
+        file.write("- Cnt: " + str(weight_count) + "\n")
+        file.write("- Max: " + str(weight_max) + "\n")
+        file.write("- Min: " + str(weight_min) + "\n\n")
+
+        for time_num, predictions in time_nums.items():
+            (
+                all_predictions,
+                all_std_devs,
+                all_probabilities,
+                all_raw_ratings,
+            ) = predictions
+
+            # Print the header info and open the file
+            # When less than 3, uses normal weight analysis
+            if time_num == 0:
+                file.write("Prediction for time span 8:30 ~ 10:00 \n")
+            elif time_num == 1:
+                file.write("Prediction for time span 10:00 ~ 12:00 \n")
+            elif time_num == 2:
+                file.write("Prediction for time span 12:00 ~ 14:00 \n")
+            else:
+                file.write("Prediction for time span 14:00 ~ 15:30 \n")
+
+            # For each prediction, iterate through the stocks
+            for ticker, predictions in all_predictions.items():
+                if predictions[index] == 1:
+                    rating = "buy"
+                elif predictions[index] == -1:
+                    rating = "sell"
+                else:
+                    rating = "undecided"
+
+                # For each stock, write the rating
+                file.write("Prediction for: " + ticker + " \n")
+                file.write(
+                    "- Std above mean: " + str(all_std_devs[ticker][index]) + "\n"
+                )
+                file.write(
+                    "- Raw val rating: " + str(all_raw_ratings[ticker][index]) + "\n"
+                )
+                file.write(
+                    "- Buy prob is: " + str(all_probabilities[ticker][index]) + "\n"
+                )
+                file.write("- Corresponds to: " + str(rating) + "\n\n")
+
+        file.close()

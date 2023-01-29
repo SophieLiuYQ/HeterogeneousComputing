@@ -22,7 +22,7 @@ _PRINT_WEIGHTS = flags.DEFINE_bool("z", False, "analyze weights")
 _USE_GPU = flags.DEFINE_bool("g", False, "use gpu for predictions")
 
 
-def analyze_weights(use_gpu, weights):
+def analyze_weights(use_gpu, weights, print_weights):
     if weights is None:
         analysis = None
     else:
@@ -33,9 +33,12 @@ def analyze_weights(use_gpu, weights):
             analysis = actions.analyze_weights(weights)
 
     if analysis:
-        actions.print_weight_analysis(analysis)
+        if print_weights:
+            actions.print_weight_analysis(analysis)
     else:
         raise RuntimeError("could not analyze weights")
+
+    return analysis
 
 
 def verify_date(date):
@@ -57,26 +60,35 @@ def verify_date(date):
     return True
 
 
-def update_weights(weight_opt, use_gpu, specified_day, time_num, news, prices):
+def make_predictions(days, time_nums, analysis, weights, news):
+    predictions = {}
+
+    for each in days:
+        predictions[each] = {}
+        for tn in time_nums:
+            logging.info(
+                "Making predictions for %s, across timespan %s-%s",
+                each,
+                tn * 2 + 8,
+                tn * 2 + 10,
+            )
+
+            stock_data = actions.select_articles(each, tn, news)
+            predictions[each][tn] = actions.predict_movement(
+                analysis, weights, stock_data
+            )
+
+    return predictions
+
+
+def update_weights(weight_opt, use_gpu, days, time_nums, news, prices):
     # Load non-day specific values
     logging.info("Loading non-day specific data before updating word weights")
 
-    # Prepare the days to update word weights for
-    days = []
-
-    # First check to see if a day is specified, if it is, set it to the day
-    # - If not, use the current day as the specified day
-    if not verify_date(specified_day):
-        raise RuntimeError("the input day is incorrect", specified_day)
-
-    day = str(dateutil.parser.parse(specified_day)).split()[0]
-    days.append(day)
-
-    weights = actions.load_all_word_weights(weight_opt, use_gpu)
-    time_nums = range(4) if time_num == -1 else [time_num]
-
     stock_prices = actions.select_prices(prices)
     logging.info("stock_prices=\n%s", stock_prices)
+
+    weights = actions.load_all_word_weights(weight_opt, use_gpu)
 
     for each in days:
         for tn in time_nums:
@@ -106,6 +118,16 @@ def main(argv):
     api_keys = data_processing.read_api_keys()
     tickers = data_processing.read_portfolio()
 
+    if _DAY.value is not None:
+        if not verify_date(_DAY.value):
+            raise RuntimeError("could not verify date", _DAY.value)
+        else:
+            day = str(dateutil.parser.parse(_DAY.value)).split()[0]
+            days = [day]
+    else:
+        today = datetime.date.today()
+        days = [today.strftime("%Y-%m-%d")]
+
     if _REFRESH_NEWS.value:
         news = data_processing.refresh_news_files(tickers, api_keys)
     elif _UPDATE_WEIGHTS.value:
@@ -116,15 +138,23 @@ def main(argv):
     elif _UPDATE_WEIGHTS.value:
         prices = data_processing.load_price_files(tickers)
 
+    # Prepare the days to update word weights for
+    time_nums = range(4) if _TIME_NUM.value == -1 else [_TIME_NUM.value]
+
     if _UPDATE_WEIGHTS.value:
         weights = update_weights(
-            _OPT.value, _USE_GPU.value, _DAY.value, _TIME_NUM.value, news, prices
+            _OPT.value, _USE_GPU.value, days, time_nums, news, prices
         )
-    elif _PRINT_WEIGHTS.value:
+    elif _PREDICT.value or _PRINT_WEIGHTS.value:
         weights = actions.load_all_word_weights(_OPT.value, _USE_GPU.value)
 
-    if _PRINT_WEIGHTS.value:
-        analyze_weights(_USE_GPU.value, weights)
+    if _PREDICT.value or _PRINT_WEIGHTS.value:
+        analysis = analyze_weights(_USE_GPU.value, weights, _PRINT_WEIGHTS.value)
+
+    if _PREDICT.value:
+        predictions = make_predictions(days, time_nums, analysis, weights, news)
+        for index in range(2):
+            actions.write_predictions_to_file_and_print(analysis, predictions, index)
 
 
 if __name__ == "__main__":
