@@ -2380,52 +2380,56 @@ def load_articles(day, time_num):
             elif date_time < start_time:
                 break  # terminate search early (ordered data)
 
-    print(stock_data)
+    print("stock_data=", stock_prices, sep='\n')
 
     return True
 
 
 
 def load_stock_prices():
+    prices = data_processing.load_price_files(STOCK_TAGS)
 
-    for ticker in STOCK_TAGS:
-        try:
-            file = open("./data/price_{}.csv".format(ticker), 'r')
-        except IOError as error:
-            logging.warning('- Could not load stock prices for {}, Error: '.format(ticker) + str(error))
+    def store_price(ticker, date, idx, price):
+        ticker_dict = stock_prices.get(ticker, {})
+        date_dict = ticker_dict.get(date, {})
+        idx_list = date_dict.get(idx, [])
 
-        # skip the first line as it is the header
-        file.readline()
-        stock_prices[ticker] = {}
+        idx_list.append(price)
+
+        date_dict[idx] = idx_list
+        ticker_dict[date] = date_dict
+        stock_prices[ticker] = ticker_dict
+
+    for ticker, df in prices.items():
         # create stock_prices dic for current stock
-        cur_day = ""
-        price_prev = 0
-        for line in file:
-            # parse data on the ","
-            data = line.strip().split(",")
+        cur_day, price_prev = "", 0
+        for row in df.itertuples():
+            _, price, dt, market_open = row
+            if not market_open:
+                continue
             # get price and datetime, e.g., price = 180.17, date_time = 12/13/21
-            price = round(float(data[0]), 2)
-            date_time = data[1]
+            price = round(price, 2)
+            dt = dt.replace(tzinfo=TIMEZONE)
             # reformat time, e.g., date = 12/13/21, localtime = 15:15
-            date = str(parse(date_time.split()[0])).split()[0]
-            localtime = date_time.split()[1]
+            date = dt.strftime("%Y-%m-%d")
+            localtime = dt.strftime("%H:%M")
             # formulate date
             if date != cur_day:
                 if price_prev != 0:
-                    stock_prices[ticker][cur_day][3].append(price_prev)
+                    store_price(ticker, cur_day, 3, price_prev)
                 cur_day = date
                 cur_hour = 8
-                stock_prices[ticker][date] = {}
-                stock_prices[ticker][date][0] = [price]
+                store_price(ticker, date, 0, price)
             # formulate price to be 2 hr interval
             hour = int(localtime.split(":")[0])
             if hour != cur_hour and hour != (cur_hour+1):
-                stock_prices[ticker][date][(cur_hour-8)//2].append(price)
+                store_price(ticker, date, (cur_hour-8)//2, price)
                 cur_hour = hour
-                stock_prices[ticker][date][(cur_hour-8)//2] = [price]
+                store_price(ticker, date, (cur_hour-8)//2, price)
             price_prev = price
-        stock_prices[ticker][date][(cur_hour - 8) // 2].append(price)
-        file.close()
+        store_price(ticker, date, (cur_hour-8)//2, price)
+
+    print("stock_prices=", stock_prices, sep='\n')
 
 '''
 Main Execution
@@ -2571,6 +2575,7 @@ def main():
 
         day = str(parse(specified_day)).split()[0]
         days.append(day)
+
         load_stock_prices()
         # Run everything on the CPU
         load_all_word_weights(weight_opt)

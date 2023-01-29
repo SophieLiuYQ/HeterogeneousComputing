@@ -38,7 +38,7 @@ def read_portfolio(
     filepath = os.path.join(export_dir, portfolio_file)
     with open(filepath, "r") as f:
         tickers = [ticker.strip() for ticker in sorted(f)]
-        return filter(bool, tickers)  # only take non-empty tickers
+        return list(filter(bool, tickers))  # only take non-empty tickers
 
 
 def refresh_news_files(tickers, api_keys, export_dir=_DEFAULT_EXPORT_DIR):
@@ -127,3 +127,24 @@ def load_news_files(tickers, export_dir=_DEFAULT_EXPORT_DIR):
             pass
 
     return news
+
+
+def load_price_files(tickers, export_dir=_DEFAULT_EXPORT_DIR):
+    """load news files without refreshing them."""
+    prices = {}
+
+    for ticker in tickers:
+        filepath = os.path.join(export_dir, f"{_DEFAULT_PRICE_PREFIX}_{ticker}.csv")
+
+        try:
+            read_prices = lambda: pd.read_csv(
+                filepath,
+                dtype={"price": "float", "time": "str", "market_open": "bool"},
+                parse_dates=["time"],
+            )
+
+            prices[ticker] = read_prices()
+        except FileNotFoundError:
+            pass
+
+    return prices
