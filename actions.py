@@ -480,7 +480,8 @@ def select_prices(prices):
                 continue
             # get price and datetime, e.g., price = 180.17, date_time = 12/13/21
             price = round(price, 2)
-            dt = dt.replace(tzinfo=TIMEZONE)
+            dt = dt.to_pydatetime()
+            dt = dt.astimezone(TIMEZONE)
             # reformat time, e.g., date = 12/13/21, localtime = 15:15
             date = dt.strftime("%Y-%m-%d")
             localtime = dt.strftime("%H:%M")
