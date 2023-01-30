@@ -896,7 +896,7 @@ def update_word(ticker, option, word_upper, day, time_num):
             try:
                 change = stock_prices[ticker][day][time_num][1] - stock_prices[ticker][day][time_num][0]
             except KeyError:
-                continue
+                return
 
             found = True
 
