@@ -1,3 +1,4 @@
 # list of periodic tasks
 python3 use_for_test_better_result.py -a
 python3 use_for_test_better_result.py -s
+python3 predict.py

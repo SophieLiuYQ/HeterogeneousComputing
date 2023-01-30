@@ -2,6 +2,7 @@
    new time range, try to predict its outcome"""
 
 import datetime
+import os
 import subprocess
 import sys
 import zoneinfo
@@ -58,6 +59,8 @@ def run_cmd(args):
 
 def main(argv):
     del argv
+
+    os.makedirs("output", exist_ok=True)
 
     if _TIME_FLAG.value is None:
         dt = datetime.datetime.now()
