@@ -18,7 +18,7 @@ _DAY = flags.DEFINE_string("d", None, "target date")
 _TIME_NUM = flags.DEFINE_integer("t", -1, "target time range")
 _OPT = flags.DEFINE_string("o", "opt1", "the weighting system to use")
 _PRINT_WEIGHTS = flags.DEFINE_bool("z", False, "analyze weights")
-# _PRINT_ACCURACY = flags.DEFINE_bool("validate", False, "analyze accuracy")
+_PRINT_ACCURACY = flags.DEFINE_bool("c", False, "analyze accuracy")
 _USE_GPU = flags.DEFINE_bool("g", False, "use gpu for predictions")
 
 
@@ -74,6 +74,8 @@ def make_predictions(days, time_nums, analysis, weights, news):
             )
 
             stock_data = actions.select_articles(each, tn, news)
+            print(stock_data)
+
             predictions[each][tn] = actions.predict_movement(
                 analysis, weights, stock_data
             )
@@ -81,12 +83,9 @@ def make_predictions(days, time_nums, analysis, weights, news):
     return predictions
 
 
-def update_weights(weight_opt, use_gpu, days, time_nums, news, prices):
+def update_weights(weight_opt, use_gpu, days, time_nums, news, stock_prices):
     # Load non-day specific values
     logging.info("Loading non-day specific data before updating word weights")
-
-    stock_prices = actions.select_prices(prices)
-    logging.info("stock_prices=\n%s", stock_prices)
 
     weights = actions.load_all_word_weights(weight_opt, use_gpu)
 
@@ -130,20 +129,24 @@ def main(argv):
 
     if _REFRESH_NEWS.value:
         news = data_processing.refresh_news_files(tickers, api_keys)
-    elif _UPDATE_WEIGHTS.value:
+    elif _PREDICT.value or _UPDATE_WEIGHTS.value:
         news = data_processing.load_news_files(tickers)
 
     if _REFRESH_PRICES.value:
         prices = data_processing.refresh_price_files(tickers, api_keys)
-    elif _UPDATE_WEIGHTS.value:
+    elif _UPDATE_WEIGHTS.value or _PRINT_ACCURACY.value:
         prices = data_processing.load_price_files(tickers)
+
+    if _UPDATE_WEIGHTS.value or _PRINT_ACCURACY.value:
+        stock_prices = actions.select_prices(prices)
+        logging.info("stock_prices=\n%s", stock_prices)
 
     # Prepare the days to update word weights for
     time_nums = range(4) if _TIME_NUM.value == -1 else [_TIME_NUM.value]
 
     if _UPDATE_WEIGHTS.value:
         weights = update_weights(
-            _OPT.value, _USE_GPU.value, days, time_nums, news, prices
+            _OPT.value, _USE_GPU.value, days, time_nums, news, stock_prices
         )
     elif _PREDICT.value or _PRINT_WEIGHTS.value:
         weights = actions.load_all_word_weights(_OPT.value, _USE_GPU.value)
@@ -155,6 +158,9 @@ def main(argv):
         predictions = make_predictions(days, time_nums, analysis, weights, news)
         for index in range(2):
             actions.write_predictions_to_file_and_print(analysis, predictions, index)
+
+    if _PRINT_ACCURACY.value:
+        actions.determine_accuracy(stock_prices)
 
 
 if __name__ == "__main__":

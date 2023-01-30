@@ -1,12 +1,14 @@
 import datetime
 import math
 import numpy as np
+import os
 import re
 import struct
 import zoneinfo
 
-from scipy import stats
 from absl import logging
+from scipy import stats
+from matplotlib import pyplot as plt
 
 norm = stats.norm
 
@@ -829,3 +831,132 @@ def write_predictions_to_file_and_print(analysis, predictions, index):
                 file.write("- Corresponds to: " + str(rating) + "\n\n")
 
         file.close()
+
+
+def determine_accuracy(stock_prices):
+    prediction_results = [[], []]
+
+    # Loop over all prediction files
+    for filename in os.listdir("./output/"):
+        # Open the file
+        try:
+            file = open("./output/" + filename, "r+")
+        except IOError:
+            logging.error("could not open: " + filename)
+            continue
+
+        num_correct = 0
+        num_wrong = 0
+        num_undecided = 0
+        current_stock = ""
+        found = False
+
+        # Get the prediction method type
+        # 1-6 use the very basic weighting algorithim, 7 uses Naive Bayes
+        try:
+            prediction_type = int(filename[10])
+        except:
+            continue
+
+        # Get the day the prediction was made
+        try:
+            ii = filename.index("-")
+            prediction_date = filename[ii + 1 : -4]
+        except:
+            continue
+
+        count = 0
+        # Iterate through the file
+        for lines in file:
+            # Find a prediction
+            if lines[: len("Prediction for:")] == "Prediction for:" and found == False:
+                time_num = count // 8
+                # Record the stock
+                current_stock = lines[len("Prediction for:") + 1 : -2]
+
+                # Set found to true to look for the rating
+                found = True
+                count += 1
+
+            # Find a rating
+            if (
+                lines[: len("- Corresponds to:")] == "- Corresponds to:"
+                and found == True
+            ):
+                # Get the rating
+                rating = lines[len("- Corresponds to:") + 1 : -1]
+
+                # Get the chane in the stock price for that day
+                logging.info(
+                    "current_stock=%s, prediction_date=%s, time_num=%s",
+                    current_stock,
+                    prediction_date,
+                    time_num,
+                )
+
+                change = (
+                    stock_prices[current_stock][prediction_date][3][1]
+                    - stock_prices[current_stock][prediction_date][3][0]
+                )
+
+                # Check if the prediction was correct
+                if change > 0 and rating == "buy":
+                    num_correct += 1
+                elif change < 0 and rating == "sell":
+                    num_correct += 1
+                elif rating == "undecided":
+                    num_undecided += 1
+                else:
+                    num_wrong += 1
+
+                # Set found back to false to find evaluate the next stock
+                found = False
+
+        # At the end of the file, state the statistics
+        if num_correct + num_wrong != 0:
+            logging.info(
+                filename
+                + "\t: Correct: "
+                + str(float(num_correct) / (num_wrong + num_correct) * 100)
+                + "%"
+            )
+        else:
+            logging.info(filename + "\t: All undecided")
+
+        # Add the values to the date set and prediction lists
+        if num_correct + num_wrong != 0:
+            prediction_results[prediction_type - 1].append(
+                [float(num_correct) / (num_wrong + num_correct), prediction_date]
+            )
+
+    # Plot everything
+    plt.figure()
+    plt.gcf()
+    legend = []
+    colors = ["orange", "blue"]
+    for ii, types in enumerate(prediction_results):
+        dates = []
+        vals = []
+
+        # Split the dates and values
+        for each in types:
+            dates.append(each[1])
+            vals.append(each[0])
+
+        # Order the two pairs and create the plot
+        if len(dates) > 0:
+            new_dates, new_vals = zip(*sorted(zip(dates, vals)))
+            avg = np.average(new_vals)
+            plt.axhline(y=avg, linestyle="dotted", color=colors[-1])
+            plt.text(len(dates) // 2, avg, ("%.2f" % avg), color="black")
+            legend.append("Average  " + str(ii + 1))
+            plt.plot(new_dates, new_vals, color=colors.pop())
+            legend.append("Prediction  " + str(ii + 1))
+
+    plt.legend(legend, loc="upper left")
+    plt.xlabel("Date")
+    plt.xticks(rotation=45)
+    plt.ylabel("Accuracy")
+    plt.title("prediction accuracy for 3:00PM to 4:00PM")
+    plt.subplots_adjust(bottom=0.2)
+    plt.savefig("prediction_accuracy for 3:00PM to 4:00PM.png")
