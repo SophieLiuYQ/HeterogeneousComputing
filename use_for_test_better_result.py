@@ -885,7 +885,6 @@ def update_word(ticker, option, word_upper, day, time_num):
 
             # If it is the same, mark it as found and update its values
             # weight = (weight * value + increase)/(value + increase)
-            found = True
 
             if not ticker in stock_prices:
                 logging.error('-- Could not find stock ' + ticker + ' in stock price data')
@@ -894,7 +893,12 @@ def update_word(ticker, option, word_upper, day, time_num):
                 logging.error('-- Could not find stock price data for ' + ticker + ' on ' + day)
                 return
 
-            change = stock_prices[ticker][day][time_num][1] - stock_prices[ticker][day][time_num][0]
+            try:
+                change = stock_prices[ticker][day][time_num][1] - stock_prices[ticker][day][time_num][0]
+            except KeyError:
+                continue
+
+            found = True
 
             # Option 1: 1 for up, 0 for down, average the ups and downs for weights
             # weight = num_up / total
