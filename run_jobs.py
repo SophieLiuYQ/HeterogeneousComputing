@@ -103,6 +103,11 @@ def main(argv):
 
     with open("jobs.txt", "r") as f:
         for job in f.readlines():
+            try:
+                job = job[:job.index('#')]
+            except ValueError:
+                pass
+
             job = job.strip()
             if not job:
                 continue
