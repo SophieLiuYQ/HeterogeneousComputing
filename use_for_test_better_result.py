@@ -896,7 +896,7 @@ def update_word(ticker, option, word_upper, day, time_num):
             try:
                 change = stock_prices[ticker][day][time_num][1] - stock_prices[ticker][day][time_num][0]
             except KeyError:
-                return
+                continue
 
             found = True
 
@@ -940,7 +940,10 @@ def update_word(ticker, option, word_upper, day, time_num):
     if not found:
         # Get whether the stock went up or down
         # weight is automatically 1 or 0 for the first one
-        change = stock_prices[ticker][day][time_num][1] - stock_prices[ticker][day][time_num][0]
+        try:
+            change = stock_prices[ticker][day][time_num][1] - stock_prices[ticker][day][time_num][0]
+        except KeyError:
+            return
 
         if option == 'opt1':
             if change > 0:
