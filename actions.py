@@ -834,8 +834,71 @@ def write_predictions_to_file_and_print(analysis, predictions, index):
         file.close()
 
 
-def determine_accuracy(stock_prices):
-    prediction_results = [[], []]
+class Accuracy:
+    def __init__(self):
+        self.num_right = 0
+        self.num_total = 0
+
+    def __iadd__(self, record):
+        change, prediction = record
+        if change > 0 and prediction == 1:
+            self.num_right += 1
+        elif change < 0 and prediction == -1:
+            self.num_right += 1
+        self.num_total += 1
+        return self
+
+    def __repr__(self) -> str:
+        if self.num_total == 0:
+            return f"Accuracy(N/A)"
+        else:
+            return f"Accuracy({100 * self.num_right / self.num_total}%)"
+
+
+def determine_accuracy(predictions, stock_prices, index):
+    accuracy = {}
+
+    for day, time_nums in predictions.items():
+        for time_num, predictions in time_nums.items():
+            if isinstance(predictions, tuple):
+                (
+                    all_predictions,
+                    _,
+                    _,
+                    _,
+                ) = predictions
+            else:
+                all_predictions = predictions
+
+            for ticker, predictions in all_predictions.items():
+                try:
+                    change = (
+                        stock_prices[ticker][day][time_num][1]
+                        - stock_prices[ticker][day][time_num][0]
+                    )
+                except:
+                    continue
+
+                if ticker not in accuracy:
+                    accuracy[ticker] = Accuracy()
+
+                accuracy[ticker] += (change, predictions[index])
+
+    return accuracy
+
+
+def load_predictions():
+    predictions = {}
+
+    def get_or_set(dictionary, key, default_value):
+        if key not in dictionary:
+            dictionary[key] = default_value
+        return dictionary[key]
+
+    def store_prediction(ticker, day, timenum, index, prediction):
+        timenums = get_or_set(predictions, day, {})
+        tickers = get_or_set(timenums, timenum, {})
+        (get_or_set(tickers, ticker, {}))[index] = prediction
 
     # Loop over all prediction files
     for filename in os.listdir("./output/"):
@@ -843,12 +906,9 @@ def determine_accuracy(stock_prices):
         try:
             file = open("./output/" + filename, "r+")
         except IOError:
-            logging.error("could not open: " + filename)
+            logging.warning("Could not open: %s", filename)
             continue
 
-        num_correct = 0
-        num_wrong = 0
-        num_undecided = 0
         current_stock = ""
         found = False
 
@@ -887,77 +947,20 @@ def determine_accuracy(stock_prices):
                 # Get the rating
                 rating = lines[len("- Corresponds to:") + 1 : -1]
 
-                # Get the chane in the stock price for that day
-                logging.info(
-                    "current_stock=%s, prediction_date=%s, time_num=%s",
+                # Convert into internal format
+                if rating == "buy":
+                    prediction = 1
+                elif rating == "sell":
+                    prediction = -1
+                else:
+                    continue
+
+                store_prediction(
                     current_stock,
                     prediction_date,
                     time_num,
+                    prediction_type - 1,
+                    prediction,
                 )
 
-                change = (
-                    stock_prices[current_stock][prediction_date][3][1]
-                    - stock_prices[current_stock][prediction_date][3][0]
-                )
-
-                # Check if the prediction was correct
-                if change > 0 and rating == "buy":
-                    num_correct += 1
-                elif change < 0 and rating == "sell":
-                    num_correct += 1
-                elif rating == "undecided":
-                    num_undecided += 1
-                else:
-                    num_wrong += 1
-
-                # Set found back to false to find evaluate the next stock
-                found = False
-
-        # At the end of the file, state the statistics
-        if num_correct + num_wrong != 0:
-            logging.info(
-                filename
-                + "\t: Correct: "
-                + str(float(num_correct) / (num_wrong + num_correct) * 100)
-                + "%"
-            )
-        else:
-            logging.info(filename + "\t: All undecided")
-
-        # Add the values to the date set and prediction lists
-        if num_correct + num_wrong != 0:
-            prediction_results[prediction_type - 1].append(
-                [float(num_correct) / (num_wrong + num_correct), prediction_date]
-            )
-
-    # Plot everything
-    plt.figure()
-    plt.gcf()
-    legend = []
-    colors = ["orange", "blue"]
-    for ii, types in enumerate(prediction_results):
-        dates = []
-        vals = []
-
-        # Split the dates and values
-        for each in types:
-            dates.append(each[1])
-            vals.append(each[0])
-
-        # Order the two pairs and create the plot
-        if len(dates) > 0:
-            new_dates, new_vals = zip(*sorted(zip(dates, vals)))
-            avg = np.average(new_vals)
-            plt.axhline(y=avg, linestyle="dotted", color=colors[-1])
-            plt.text(len(dates) // 2, avg, ("%.2f" % avg), color="black")
-            legend.append("Average  " + str(ii + 1))
-            plt.plot(new_dates, new_vals, color=colors.pop())
-            legend.append("Prediction  " + str(ii + 1))
-
-    plt.legend(legend, loc="upper left")
-    plt.xlabel("Date")
-    plt.xticks(rotation=45)
-    plt.ylabel("Accuracy")
-    plt.title("prediction accuracy for 3:00PM to 4:00PM")
-    plt.subplots_adjust(bottom=0.2)
-    plt.savefig("prediction_accuracy for 3:00PM to 4:00PM.png")
+    return predictions

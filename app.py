@@ -158,9 +158,14 @@ def main(argv):
         predictions = make_predictions(days, time_nums, analysis, weights, news)
         for index in range(2):
             actions.write_predictions_to_file_and_print(analysis, predictions, index)
+    elif _PRINT_ACCURACY.value:
+        predictions = actions.load_predictions()
 
     if _PRINT_ACCURACY.value:
-        actions.determine_accuracy(stock_prices)
+        logging.info("predictions = %s", predictions)
+        for index in range(2):
+            accuracy = actions.determine_accuracy(predictions, stock_prices, index)
+            logging.info("accuracy of method %d=%s", index + 1, accuracy)
 
 
 if __name__ == "__main__":
